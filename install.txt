@@ -1,0 +1,58 @@
+
+python35-setuptools.noarch 
+sudo alternatives --set python /usr/bin/python3.5
+
+sudo easy_install-3.5 pip
+sudo nano /etc/sudoers
+ -> Modify to 
+    Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
+
+wget http://cdn.mysql.com/Downloads/Connector-Python/mysql-connector-python-2.0.4.zip#md5=3df394d89300db95163f17c843ef49df
+unzip mysql-connector-python-2.0.4.zip
+cd mysql-connector-python-2.0.4
+sudo python3 setup.py install
+
+sudo yum install git
+
+
+
+(IF mysql need to be removed )
+{
+    sudo yum remove mysql mysql-server mysql-common mysql-client
+    rpm -qa | grep -i mysql
+    (from the avove list) rpm -e mysql libmysqlclient15-5.0.94-0.2.4.1 <and so on>
+    cd /var/lib
+    rm -rf mysql
+}
+
+sudo  wget http://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
+sudo tar -xvf MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
+sudo yum -y install MySQL-client-5.6.23-1.el7.x86_64.rpm
+sudo yum install MySQL-shared-compat-5.6.23-1.el7.x86_64.rpm
+sudo yum install MySQL-server-5.6.23-1.el7.x86_64.rpm
+
+sudo yum install mysql
+sudo mkdir /var/lib/mysql
+sudo yum install mysql-server
+sudo /etc/init.d/mysqld start
+mysqladmin -u root password 'root'
+sudo chkconfig mysqld on
+
+
+(After FTP send for record.csv)
+sudo mv records.csv /var/lib/mysql-files/
+
+mysql -uroot -proot
+create database bustapick;
+use bustapick;
+create table record(game int primary key, rate varchar(10));
+create table max_table(rate varchar(10) primary key, max int);
+load data infile '/var/lib/mysql-files/records.csv' into table record fields terminated by',' lines terminated by '\n';
+
+
+
+
+
+
+
+
