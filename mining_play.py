@@ -45,8 +45,9 @@ def insert_db(type):
     except KeyboardInterrupt:
         sys.exit()
     except:
-        time.sleep(3)
-        insert_db('past')     
+        print("Wait..")                
+        time.sleep(4)
+        insert_db('next')     
         
 cnx = mysql.connector.connect(user='root', password='root',
                               host='127.0.0.1',

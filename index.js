@@ -79,8 +79,8 @@ app.get('/', (req, res) => {
 });
 
 function test() {
-  dal.getMax(conn).then((max_array) => {
-    dal.getRecent(conn, 300).then((recent_array) => {
+  dal.getMax(conn).then((max_array) => {    
+    dal.getRecent(conn, 300).then((recent_array) => {      
       dal.calculate(max_array, recent_array).then((msg) => {
         console.log(msg);
         //res.render('main', {
@@ -97,11 +97,11 @@ function test() {
 
 
   console.log("\n\n\n------------------------------------------------------------");
-  //test();
+  test();
 
 
 
-
+/*
 //Server Launch
 var port = 3000
 var addr = "http://ec2-54-186-19-191.us-west-2.compute.amazonaws.com:" + port + "?id=" + id;
@@ -110,3 +110,4 @@ app.listen(port, () => {
   console.log("Sever launced at: ", addr);
   console.log("Test: ", addr2);
 })
+*/

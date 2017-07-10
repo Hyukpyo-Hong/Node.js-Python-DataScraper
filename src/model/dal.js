@@ -50,7 +50,6 @@ exports.getMax = (conn) => {
                 for (i in rows) {
                     array[rows[i].rate] = rows[i].max;
                 }
-
                 resolve(array);
             }
         });
@@ -76,7 +75,7 @@ exports.getRecent = (conn, number) => {
 }
 exports.calculate = (max_array, recent_array) => {
     return new Promise((resolve, reject) => {
-        const mybudget = 3613;
+        const mybudget = 4000;
 
         max_array_minMax = getminMax(max_array);
         recent_array_minMax = getminMax(recent_array);
@@ -84,38 +83,60 @@ exports.calculate = (max_array, recent_array) => {
         max_array_max = max_array_minMax['max'];
         recent_array_min = recent_array_minMax['min'];
         recent_array_max = recent_array_minMax['max'];
-        
-        console.log("My Budget: ", mybudget)
-        console.log("Survery on the latest",(recent_array_max-recent_array_min),"games.");
-        console.log("Min_max Table is based on the latest ",(max_array_max-max_array_min),"games.");
+
+        console.log("My Budget: ", mybudget, "  Survery on the latest", (recent_array_max - recent_array_min + 1), "games.")
         console.log(recent_array[recent_array_max], "Game#", recent_array_max);
         console.log(recent_array[recent_array_max - 1], "Game#", recent_array_max - 1);
         console.log(recent_array[recent_array_max - 2], "Game#", recent_array_max - 2);
-        console.log("------------------------------------------------------------");
-
+        console.log("------------------------------------------------------------\n");
+        var array = [];
+        var t = 0;
         for (i = max_array_min * 10; i <= max_array_max * 10; i++) {
             var max = max_array[i / 10];
             var count = 0;
 
             for (j = recent_array_max; j >= recent_array_min; j--) {
-                //console.log("Compare with ", i / 10, "(max: ", max_array[i/10], ") with Game#", j, "(", recent_array[j], ")");
-                if (recent_array[j] > (i / 10)) {
+                var temp = recent_array[j];
+                if (temp.search(",") >= 0) {
+                    temp = removeCommas(temp);
+                }
+
+                if (temp >= (i / 10)) {
                     break;
                 } else {
                     count++;
                 }
             }
-            //console.log("Count:",count,"Max:",max_array[i/10]);
-            if (count < max_array[i / 10] && count > max_array[i / 10] * 0.3) {
-                console.log("Rate", (i / 10), "will win within", max_array[i / 10] - count, "Games, Passed", count, "/", max_array[i / 10]);
-                console.log('\u0007');
-            } else {
-                //  console.log("Rate ", (i / 10), " is negative.");
+
+            var delta = max - count;
+            if (delta <= 25 && i > 19) {
+                if (count > max * 3) {
+                    let msg = "Rate " + (i / 10) + " will win within " + (max - count) + " Games, Passed " + count + " / " + max;
+                    array[t] = msg;
+                    t++;
+                }
+
             }
         }
-        resolve("------------------------------------------------------------");
+
+        const log = console.log;
+        if (array.length > 0) {
+            log("***** Let's Bet! *****\n")
+        }
+        for (p = array.length - 1; p >= 0; p--) {
+            log(array[p]);
+        }
+        resolve("\n\n\n------------------------------------------------------------");
     });
 }
+
+function removeCommas(str) {
+    while (str.search(",") >= 0) {
+        str = (str + "").replace(',', '');
+    }
+    return str;
+};
+
 function getminMax(array) {
     value = {}
     value['min'] = 100000000;

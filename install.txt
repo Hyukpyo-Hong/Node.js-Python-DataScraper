@@ -12,9 +12,16 @@ unzip mysql-connector-python-2.0.4.zip
 cd mysql-connector-python-2.0.4
 sudo python3 setup.py install
 
+sudo pip3 install cfscrape;
+sudo pip3 install bs4;
+sudo pip3 install lxml;
+
+curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -.
+sudo yum -y install nodejs
+
 sudo yum install git
-
-
+git clone https://github.com/Hyukpyo-Hong/NodeJS_Python_DataPicking.git
+(after move to folder) npm install 
 
 (IF mysql need to be removed )
 {
@@ -39,7 +46,7 @@ mysqladmin -u root password 'root'
 sudo chkconfig mysqld on
 
 
-(After FTP send for record.csv)
+(After FTP send for record.csv / Be aware ther is some comma which is bigger than 1,000rate)
 sudo mv records.csv /var/lib/mysql-files/
 
 mysql -uroot -proot
@@ -48,9 +55,11 @@ use bustapick;
 create table record(game int primary key, rate varchar(10));
 create table max_table(rate varchar(10) primary key, max int);
 load data infile '/var/lib/mysql-files/records.csv' into table record fields terminated by',' lines terminated by '\n';
+load data infile '/var/lib/mysql-files/max0709.csv' into table max_table fields terminated by',' lines terminated by '\n';
 
 
 
+watch -n3 node index.js
 
 
 
