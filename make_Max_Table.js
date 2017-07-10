@@ -33,7 +33,7 @@ const create = (conn, value, start_rate, end_rate) => {
         var maxGame = value[1];
         var maxArray = {};
         var sql = "select rate from record where game= ?";
-        var compare = start_rate * 10;
+        var compare = start_rate * 100;
         var idx = minGame;        
         var max = 0;
         var submax = 0;
@@ -46,7 +46,7 @@ const create = (conn, value, start_rate, end_rate) => {
                         reject(err);
                     } else {
                         var rate = rows[0].rate;
-                        if (rate < (compare / 10)) {
+                        if (rate < (compare / 100)) {
                             submax++;
                         } else {
                             if (submax > max) {
@@ -59,9 +59,9 @@ const create = (conn, value, start_rate, end_rate) => {
                     }
                 })
             } else {
-                maxArray[(compare / 10)] = max;
-                if (compare < (end_rate * 10)) {
-                    console.log("comapre: ", compare / 10, " max: ", max);
+                maxArray[(compare / 100)] = max;
+                if (compare < (end_rate * 100)) {
+                    console.log("comapre: ", compare / 100, " max: ", max);
                     max = 0;
                     submax = 0;
                     compare += 1;
@@ -77,12 +77,12 @@ const create = (conn, value, start_rate, end_rate) => {
 // Maybe need to Make CSV file by date
 const input = (conn, array, start_rate, end_rate) => {
     return new Promise((resolve, reject) => {
-        var idx = start_rate*10;
+        var idx = start_rate*100;
         var sql = "insert into max_table values(?,?)";
 
         (function loop() {
-            if (idx <= end_rate*10) {
-                conn.query(sql, [idx/10, array[idx/10]], function (err, rows, fields) {
+            if (idx <= end_rate*100) {
+                conn.query(sql, [idx/100, array[idx/100]], function (err, rows, fields) {
                     if (err) {
                         console.log(err);
                         reject(err);
@@ -116,6 +116,6 @@ function make_Max_Table(start_rate, end_rate) {
     })
 };
 
-make_Max_Table(1.1, 50);
+make_Max_Table(10.01, 15.00);
 
 

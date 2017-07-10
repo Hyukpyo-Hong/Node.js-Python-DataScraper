@@ -56,6 +56,25 @@ exports.getMax = (conn) => {
     });
 }
 
+exports.getRate = (conn) => {
+    return new Promise((resolve, reject) => {
+        var sql = "SELECT * FROM rate order by rate";
+        conn.query(sql, function (err, rows) {
+            if (err) {
+                console.log(err);
+                reject(err);
+            } else {
+                var array = {};
+                for (i in rows) {
+                    array[rows[i].rate] = rows[i].loss;
+                }
+                resolve(array);
+            }
+        });
+    });
+}
+
+
 exports.getRecent = (conn, number) => {
     return new Promise((resolve, reject) => {
         var sql = "select * from record order by game desc limit ? offset 0;";
@@ -73,7 +92,68 @@ exports.getRecent = (conn, number) => {
         });
     });
 }
-exports.calculate = (max_array, recent_array) => {
+
+exports.rate_calculate = (max_array, rate_array, recent_array) => {
+    return new Promise((resolve, reject) => {
+
+        max_array_minMax = getminMax(max_array);
+        recent_array_minMax = getminMax(recent_array);
+        max_array_min = max_array_minMax['min'];
+        max_array_max = max_array_minMax['max'];
+        recent_array_min = recent_array_minMax['min'];
+        recent_array_max = recent_array_minMax['max'];
+
+        console.log("Survery on the latest", (recent_array_max - recent_array_min + 1), "games." + recent_array_max + "-" + recent_array_min);
+        console.log(recent_array[recent_array_max], "Game#", recent_array_max);
+        console.log(recent_array[recent_array_max - 1], "Game#", recent_array_max - 1);
+        console.log(recent_array[recent_array_max - 2], "Game#", recent_array_max - 2);
+        console.log("------------------------------------------------------------\n");
+        var array = [];
+        var t = 0;
+        var prev = 0;
+        for (i = max_array_max * 100; i >= max_array_min * 100; i--) {
+            var max = max_array[i / 100];
+            var count = 0;
+
+            for (j = recent_array_max; j >= recent_array_min; j--) {
+                var temp = recent_array[j];
+                if (temp.search(",") >= 0) {
+                    temp = removeCommas(temp);
+                }
+
+                if (temp >= (i / 100)) {
+                    break;
+                } else {
+                    count++;
+                }
+            }
+
+            var loss_rate = rate_array[i / 100];
+            var next_loss_rate = Math.pow(loss_rate, count + 1);
+            if (next_loss_rate <= 0.01) {
+                if (prev == next_loss_rate) {
+                }
+                else {
+                    let msg = "Rate / Next Lose: " + (i / 100) +" / "+ Math.round(next_loss_rate * 100000) / 1000 + " %, " + count + " / " + max+" Passed";
+                    array[t] = msg;
+                    t++;
+                    prev = next_loss_rate;
+                }
+            }
+        }
+
+        const log = console.log;
+        if (array.length > 0) {
+            log("***** Let's Bet! *****\n")
+        }
+        for (p = 0; p <= array.length - 1; p++) {
+            log(array[p]);
+        }
+        resolve("\n\n\n------------------------------------------------------------");
+    });
+}
+
+exports.max_calculate = (max_array, recent_array) => {
     return new Promise((resolve, reject) => {
         const mybudget = 4000;
 

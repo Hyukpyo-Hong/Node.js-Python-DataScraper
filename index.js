@@ -78,10 +78,10 @@ app.get('/', (req, res) => {
   }
 });
 
-function test() {
-  dal.getMax(conn).then((max_array) => {    
-    dal.getRecent(conn, 300).then((recent_array) => {      
-      dal.calculate(max_array, recent_array).then((msg) => {
+function max_method() {
+  dal.getMax(conn).then((max_array) => {
+    dal.getRecent(conn, 300).then((recent_array) => {
+      dal.max_calculate(max_array, recent_array).then((msg) => {
         console.log(msg);
         //res.render('main', {
         //html: html,
@@ -95,9 +95,29 @@ function test() {
 
 }
 
+function rate_method() {
+  dal.getMax(conn).then((max_array) => {
+    dal.getRate(conn).then((rate_array) => {
+      dal.getRecent(conn, 110).then((recent_array) => {
+        dal.rate_calculate(max_array, rate_array, recent_array).then((msg) => {
+          console.log(msg);
+          //res.render('main', {
+          //html: html,
+          process.exit();
+        })
+      })
+    })
+  }).catch((error) => {
+    console.log(error);
+    res.send(error);
+  });
 
-  console.log("\n\n\n------------------------------------------------------------");
-  test();
+}
+
+console.log("\n\n\n------------------------------------------------------------");
+//max_method();
+rate_method();
+
 
 
 
