@@ -92,7 +92,8 @@ exports.getRecent = (conn, number) => {
         });
     });
 }
-
+// max array -> Maximum lose count, [rate,max]
+// rate array -> Failure rate per one game [rate, loss]
 exports.rate_calculate = (max_array, rate_array, recent_array) => {
     return new Promise((resolve, reject) => {
 
@@ -103,10 +104,10 @@ exports.rate_calculate = (max_array, rate_array, recent_array) => {
         recent_array_min = recent_array_minMax['min'];
         recent_array_max = recent_array_minMax['max'];
 
-        console.log("Survery on the latest", (recent_array_max - recent_array_min + 1), "games." + recent_array_max + "-" + recent_array_min);
-        console.log(recent_array[recent_array_max], "Game#", recent_array_max);
-        console.log(recent_array[recent_array_max - 1], "Game#", recent_array_max - 1);
-        console.log(recent_array[recent_array_max - 2], "Game#", recent_array_max - 2);
+        console.log("Survery on the latest", (recent_array_max - recent_array_min + 1), "data.");
+        console.log("#", recent_array_max, recent_array[recent_array_max]);
+        console.log("#", recent_array_max - 1, recent_array[recent_array_max - 1]);
+        console.log("#", recent_array_max - 2, recent_array[recent_array_max - 2]);
         console.log("------------------------------------------------------------\n");
         var array = [];
         var t = 0;
@@ -130,11 +131,18 @@ exports.rate_calculate = (max_array, rate_array, recent_array) => {
 
             var loss_rate = rate_array[i / 100];
             var next_loss_rate = Math.pow(loss_rate, count + 1);
-            if (next_loss_rate <= 0.01) {
+            if (next_loss_rate <= 0.05 && i>=200) {
                 if (prev == next_loss_rate) {
                 }
                 else {
-                    let msg = "Rate / Next Lose: " + (i / 100) +" / "+ Math.round(next_loss_rate * 100000) / 1000 + " %, " + count + " / " + max+" Passed";
+                    let msg = "Rate / Next Lose: " + (i / 100) + " / "
+                        + Math.round(next_loss_rate * 100000) / 1000 + " %, "
+                        + Math.round(next_loss_rate * loss_rate * 100000) / 1000 + " %, "
+                        + count + " / " + max + " Passed"
+                        + " Loss rate: "+loss_rate
+                        + " Count: "+count
+                        +" Next_LOSS: "+next_loss_rate;
+                        
                     array[t] = msg;
                     t++;
                     prev = next_loss_rate;

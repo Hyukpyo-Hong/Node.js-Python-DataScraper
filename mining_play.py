@@ -46,7 +46,7 @@ def insert_db(type):
         sys.exit()
     except:
         print("Wait..")                
-        time.sleep(4)
+        time.sleep(3)
         insert_db('next')     
         
 cnx = mysql.connector.connect(user='root', password='root',
