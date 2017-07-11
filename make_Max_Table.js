@@ -33,10 +33,11 @@ const create = (conn, value, start_rate, end_rate) => {
         var maxGame = value[1];
         var maxArray = {};
         var sql = "select rate from record where game= ?";
-        var compare = start_rate * 100;
+        var compare = start_rate;
         var idx = minGame;        
         var max = 0;
         var submax = 0;
+        
 
         (function loop() {
             if (idx <= maxGame) {
@@ -60,7 +61,7 @@ const create = (conn, value, start_rate, end_rate) => {
                 })
             } else {
                 maxArray[(compare / 100)] = max;
-                if (compare < (end_rate * 100)) {
+                if (compare < (end_rate)) {
                     console.log("comapre: ", compare / 100, " max: ", max);
                     max = 0;
                     submax = 0;
@@ -116,6 +117,6 @@ function make_Max_Table(start_rate, end_rate) {
     })
 };
 
-make_Max_Table(10.01, 15.00);
+make_Max_Table(2001, 2500);
 
 
