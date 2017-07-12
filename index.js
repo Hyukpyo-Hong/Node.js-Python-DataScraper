@@ -98,7 +98,7 @@ function max_method() {
 function rate_method() {
   dal.getMax(conn).then((max_array) => {
     dal.getRate(conn).then((rate_array) => {
-      dal.getRecent(conn, 110).then((recent_array) => {
+      dal.getRecent(conn, 135).then((recent_array) => {
         dal.rate_calculate(max_array, rate_array, recent_array).then((msg) => {
           console.log(msg);
           //res.render('main', {
@@ -117,6 +117,7 @@ function rate_method() {
 console.log("\n\n\n------------------------------------------------------------");
 //max_method();
 rate_method();
+
 
 
 

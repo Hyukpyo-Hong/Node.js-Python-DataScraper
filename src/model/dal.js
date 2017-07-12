@@ -92,6 +92,79 @@ exports.getRecent = (conn, number) => {
         });
     });
 }
+
+exports.test_model = (max_array, rate_array, recent_array) => {
+    return new Promise((resolve, reject) => {
+        const log = console.log;
+        max_array_minMax = getminMax(max_array);
+        recent_array_minMax = getminMax(recent_array);
+        max_array_min = max_array_minMax['min'];
+        max_array_max = max_array_minMax['max'];
+        recent_array_min = recent_array_minMax['min'];
+        recent_array_max = recent_array_minMax['max'];
+        var rate_condition = 0.05;
+
+        var test_size = 135;
+        var test_array_min = recent_array_min;
+
+        var test_win = 0;
+        var test_lose = 0;
+        var test_bankroll = 10000;
+        var test_initial = 100;
+        var test_prev_result = true;
+        var test_array_max;
+        var Minimum_rate;
+        var prev;
+        var loss_rate;
+        var next_loss_rate;
+        
+
+        while (test_array_min < recent_array_max - test_size) {
+            test_array_max = test_array_min + test_size;
+            Minimum_rate = 100;
+
+            for (i = max_array_max * 100; i >= max_array_min * 100; i--) {
+                var max = max_array[i / 100];
+                var count = 0;
+                Minimum_rate = 0;
+
+
+                for (j = test_array_max; j >= test_array_min; j--) {
+                    var temp = recent_array[j];
+                    if (temp.search(",") >= 0) {
+                        temp = removeCommas(temp);
+                    }
+                    if (temp >= (i / 100)) {
+                        break;
+                    } else {
+                        count++;
+                    }
+                }
+
+                prev = 0;
+
+                loss_rate = rate_array[i / 100];
+                next_loss_rate = Math.pow(loss_rate, count + 1);
+                if (next_loss_rate >= 0) {
+                    if (next_loss_rate <= rate_condition && i >= 200) {
+                        if (prev == next_loss_rate) {
+                        }
+                        else {
+                            if (next_loss_rate < Minimum_rate) {
+                                Minimum_rate =  0;
+                            }
+                        }
+                    }
+                }
+            }
+            test_array_min++;
+        }
+        resolve("Finish");
+    });
+
+}
+
+
 // max array -> Maximum lose count, [rate,max]
 // rate array -> Failure rate per one game [rate, loss]
 exports.rate_calculate = (max_array, rate_array, recent_array) => {
@@ -103,11 +176,13 @@ exports.rate_calculate = (max_array, rate_array, recent_array) => {
         max_array_max = max_array_minMax['max'];
         recent_array_min = recent_array_minMax['min'];
         recent_array_max = recent_array_minMax['max'];
+        var rate_condition = 0.05;
 
         log("Survery on the latest", (recent_array_max - recent_array_min + 1), "data.");
         log("#", recent_array_max, recent_array[recent_array_max]);
         log("#", recent_array_max - 1, recent_array[recent_array_max - 1]);
         log("#", recent_array_max - 2, recent_array[recent_array_max - 2]);
+        log(`Apply Condition: Below ${rate_condition * 100}%`);
         log("------------------------------------------------------------\n");
         var array = [];
         var t = 0;
@@ -135,13 +210,13 @@ exports.rate_calculate = (max_array, rate_array, recent_array) => {
             var loss_rate = rate_array[i / 100];
             var next_loss_rate = Math.pow(loss_rate, count + 1);
             if (next_loss_rate >= 0) {
-                if (next_loss_rate <= 0.02 && i>=200) {
+                if (next_loss_rate <= rate_condition && i >= 200) {
                     if (prev == next_loss_rate) {
                     }
                     else {
                         let msg = `${(i / 100)} x   : ${Math.round(next_loss_rate * 10000) / 100}% => ${Math.round(next_loss_rate * loss_rate * 10000) / 100}% , ${count}/${max} Passed`;
-                        if(next_loss_rate<Minimum_rate){
-                            Minimum_msg=msg;
+                        if (next_loss_rate < Minimum_rate) {
+                            Minimum_msg = msg;
                         }
                         array[t] = msg;
                         t++;
@@ -153,11 +228,11 @@ exports.rate_calculate = (max_array, rate_array, recent_array) => {
 
         if (array.length > 0) {
             log("***** Let's Bet! *****");
-            log("<Best Rate>    ") ;
+            log("<Best Rate>    ");
             log(`${Minimum_msg}`);
             log("\n------------------------------------------------------------\n");
-            log("<All List>    ") ;
-            
+            log("<All List>    ");
+
         }
         for (p = 0; p <= array.length - 1; p++) {
             log(array[p]);
