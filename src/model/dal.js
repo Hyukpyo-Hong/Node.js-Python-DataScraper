@@ -170,6 +170,7 @@ exports.test_model = (max_array, rate_array, recent_array) => {
 exports.rate_calculate = (max_array, rate_array, recent_array) => {
     return new Promise((resolve, reject) => {
         const log = console.log;
+        log("HEY");
         max_array_minMax = getminMax(max_array);
         recent_array_minMax = getminMax(recent_array);
         max_array_min = max_array_minMax['min'];

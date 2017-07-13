@@ -115,7 +115,6 @@ function rate_method() {
 }
 
 console.log("\n\n\n------------------------------------------------------------");
-//max_method();
 rate_method();
 
 

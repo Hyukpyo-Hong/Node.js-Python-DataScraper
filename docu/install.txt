@@ -73,6 +73,7 @@ NaeiA65P5MJ
 
 
 SELECT * FROM max_table INTO OUTFILE '/var/lib/mysql-files/max.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-SELECT game, replace(rate,',','') FROM record order by game INTO OUTFILE '/var/lib/mysql-files/orders.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+SELECT game, replace(rate,',','') FROM record order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+SELECT * FROM rate INTO OUTFILE '/var/lib/mysql-files/rate.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
 sudo ssh -i ./hong.pem ec2-user@ec2-54-242-161-63.compute-1.amazonaws.com
