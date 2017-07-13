@@ -41,21 +41,42 @@ engine.on('game_starting', function (info) {
     console.log('New Game Start');
     if (engine.getBalance() > 479523) {
         if (go) {
-            console.log("Let's Bet: ", Minumum_msg);
+            console.log(`Let's Bet: ${Minumum_msg} / Invest: ${invest/100} bits`);
             engine.placeBet(invest, Minimum_betting, false);
         } else {
             console.log("Cannot Bet!");
         }
     }
     possible_array = [];
+    count = 0;
+    Minimum_rate = 100;
 });
 
 
 engine.on('game_crash', function (data) {
     console.log('Game crashed at ', data.game_crash);
-    console.log(`Last_Status:${engine.lastGamePlay()} Last_Played: ${engine.lastGamePlayed()}`);
 
+    if (engine.lastGamePlay() == 'LOST' && engine.lastGamePlayed() == true) {
+        console.log(`You Lose ${invest/100} bits`)
+        cum_loss++;
+        invest += invest_increase;
+        if (cum_loss == 6) {
+            cooltime_flag = 1;
+            cooltime = 10;
+            invest = invest_initial;
+        }
+    } else if (engine.lastGamePlay() == 'WON' && engine.lastGamePlayed() == true) {
+        console.log(`You Win ${(invest/100)*(Minimum_betting-1)} bits`)
+        cum_loss = 0;
+        cooltime_flag = 0;
+        invest = invest_initial;
 
+    } else {
+        cum_loss = 0;
+        cooltime_flag = 0;
+        invest = invest_initial;
+    }
+    console.log(`Cum_Lost: ${cum_loss} / Cooltime_Flag: ${cooltime_flag}`)
     if (record_array.length == array_saving) {
         record_array.shift();
         record_array.push(data.game_crash);
@@ -70,7 +91,9 @@ var array_saving = 135;
 var rate_condition = 0.05;
 
 var go = false;
-var invest = 100;
+var invest_initial = 1000;
+var invest = invest_initial;
+var invest_increase = 200;
 var record_array = [];
 var possible_array = [];
 var rate_array = {};
@@ -82,11 +105,16 @@ var Minumum_msg;
 var loss_rate;
 var next_loss_rate;
 var t = 0;
+var count = 0;
+
+var cooltime = 10;
+var cooltime_flag = 0;
+var cum_loss = 0;
 
 function calculate() {
     for (i = 101; i <= 2000; i++) {
-        var count = 0;
 
+        count = 0;
         for (j = record_array.length - 1; j >= 0; j--) {
             var record = record_array[j];
 
@@ -117,9 +145,20 @@ function calculate() {
         }
     }
     if (possible_array.length > 0) {
-        //console.log(`<Best Rate>, ${Minimum_betting}`);        
-
-        go = true;
+        //console.log(`<Best Rate>, ${Minimum_betting}`);      
+        if (cooltime_flag == 1) {
+            if (cooltime > 0) {
+                console.log(`Cool time ${cooltime} remains.`)
+                go = false;
+                cooltime--;
+            } else if (cooltime == 0) {
+                go = true;
+                cooltime_flag = 0;
+                cooltime = 10;
+            }
+        } else {
+            go = true;
+        }
     } else {
         go = false;
     }

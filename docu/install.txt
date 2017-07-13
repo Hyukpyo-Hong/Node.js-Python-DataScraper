@@ -77,3 +77,8 @@ SELECT game, replace(rate,',','') FROM record order by game INTO OUTFILE '/var/l
 SELECT * FROM rate INTO OUTFILE '/var/lib/mysql-files/rate.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
 sudo ssh -i ./hong.pem ec2-user@ec2-54-242-161-63.compute-1.amazonaws.com
+
+Public DNS	ec2-34-229-94-207.compute-1.amazonaws.com
+User name	Administrator
+Password	
+tdD6I4m.ZlBy47w.F8d-?dWJHczmt6(y
