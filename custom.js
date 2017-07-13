@@ -35,63 +35,11 @@ engine.on('disconnect', function () {
 });
 
 //-----------------------------------------------------------------------
-
-engine.on('game_starting', function (info) {
-    console.log('------------------------');
-    console.log('New Game Start');
-    if (engine.getBalance() > 479523) {
-        if (go) {
-            console.log(`Let's Bet: ${Minumum_msg} / Invest: ${invest/100} bits`);
-            engine.placeBet(invest, Minimum_betting, false);
-        } else {
-            console.log("Cannot Bet!");
-        }
-    }
-    possible_array = [];
-    count = 0;
-    Minimum_rate = 100;
-});
-
-
-engine.on('game_crash', function (data) {
-    console.log('Game crashed at ', data.game_crash);
-
-    if (engine.lastGamePlay() == 'LOST' && engine.lastGamePlayed() == true) {
-        console.log(`You Lose ${invest/100} bits`)
-        cum_loss++;
-        invest += invest_increase;
-        if (cum_loss == 6) {
-            cooltime_flag = 1;
-            cooltime = 10;
-            invest = invest_initial;
-        }
-    } else if (engine.lastGamePlay() == 'WON' && engine.lastGamePlayed() == true) {
-        console.log(`You Win ${(invest/100)*(Minimum_betting-1)} bits`)
-        cum_loss = 0;
-        cooltime_flag = 0;
-        invest = invest_initial;
-
-    } else {
-        cum_loss = 0;
-        cooltime_flag = 0;
-        invest = invest_initial;
-    }
-    console.log(`Cum_Lost: ${cum_loss} / Cooltime_Flag: ${cooltime_flag}`)
-    if (record_array.length == array_saving) {
-        record_array.shift();
-        record_array.push(data.game_crash);
-    } else {
-        record_array.push(data.game_crash);
-    }
-    //console.log("Record Array has " + record_array.length + " games.")
-    calculate();
-});
-
 var array_saving = 135;
 var rate_condition = 0.05;
 
 var go = false;
-var invest_initial = 1000;
+var invest_initial = 2000;
 var invest = invest_initial;
 var invest_increase = 200;
 var record_array = [];
@@ -111,7 +59,59 @@ var cooltime = 10;
 var cooltime_flag = 0;
 var cum_loss = 0;
 
+engine.on('game_starting', function (info) {
+    console.log('------------------------');
+    console.log('New Competition Start');
+    if (engine.getBalance() > 450000) {
+        if (go) {
+            console.log(`Let's go: ${Minumum_msg} / Invest: ${invest/100} bits`);
+            engine.placeBet(invest, Minimum_betting, false);
+        } else {
+            console.log('Wait...');
+        }
+    }
+    possible_array = [];
+    count = 0;
+    Minimum_rate = 100;
+});
+
+
+engine.on('game_crash', function (data) {
+    console.log('Result: ', data.game_crash/100);
+
+    if (engine.lastGamePlay() == 'LOST' && engine.lastGamePlayed() == true) {
+        console.log(`You Lose ${invest/100} bits`)
+        cum_loss++;
+        invest += invest_increase;
+        if (cum_loss == 6) {
+            cooltime_flag = 1;
+            cooltime = 10;
+            invest = invest_initial;
+        }
+    } else if (engine.lastGamePlay() == 'WON' && engine.lastGamePlayed() == true) {
+        console.log(`You Win ${(invest/100)*((Minimum_betting/100)-1)} bits`)
+        cum_loss = 0;
+        cooltime_flag = 0;
+        invest = invest_initial;
+
+    } else {
+        cum_loss = 0;        
+        invest = invest_initial;
+    }
+    console.log(`Cum_Lost: ${cum_loss} / Cooltime_Flag: ${cooltime_flag} / CoolTime: ${cooltime}`)
+    if (record_array.length == array_saving) {
+        record_array.shift();
+        record_array.push(data.game_crash);
+    } else {
+        record_array.push(data.game_crash);
+    }    
+    calculate();
+});
+
+
 function calculate() {
+    
+    // 1.01 ~ 20.00
     for (i = 101; i <= 2000; i++) {
 
         count = 0;
@@ -124,7 +124,6 @@ function calculate() {
                 count++;
             }
         }
-
         loss_rate = rate_array[i];
         next_loss_rate = Math.pow(loss_rate, count + 1);
 
@@ -144,17 +143,51 @@ function calculate() {
             }
         }
     }
+    console.log(Minimum_betting);
+    //50.00 ~ 1000.00
+    for (i = 5000; i <= 100000; i+=1000) {
+        count = 0;
+        for (j = record_array.length - 1; j >= 0; j--) {
+            var record = record_array[j];
+
+            if (record >= i) {
+                break;
+            } else {
+                count++;
+            }
+        }
+        loss_rate = 0.99;
+        next_loss_rate = Math.pow(loss_rate, count + 1);
+
+        if (next_loss_rate <= rate_condition && i >= 200) {
+            if (prev == next_loss_rate) {
+            }
+            else {
+                let msg = `${(i / 100)} x   : ${Math.round(next_loss_rate * 10000) / 100}% => ${Math.round(next_loss_rate * loss_rate * 10000) / 100}% , ${count} Passed`;
+                if (next_loss_rate < Minimum_rate) {
+                    Minimum_rate = next_loss_rate;
+                    Minimum_betting = i;
+                    Minumum_msg = msg;
+                }
+                possible_array[t] = msg;
+                t++;
+                prev = next_loss_rate;
+            }
+        }
+    }
+    console.log(Minimum_betting);
+
+
     if (possible_array.length > 0) {
         //console.log(`<Best Rate>, ${Minimum_betting}`);      
         if (cooltime_flag == 1) {
-            if (cooltime > 0) {
-                console.log(`Cool time ${cooltime} remains.`)
+            if (cooltime > 0) {                
                 go = false;
                 cooltime--;
             } else if (cooltime == 0) {
+                console.log('Cool time Released.')
                 go = true;
-                cooltime_flag = 0;
-                cooltime = 10;
+                cooltime_flag = 0;                
             }
         } else {
             go = true;
