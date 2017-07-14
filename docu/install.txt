@@ -82,3 +82,6 @@ Public DNS	ec2-34-229-94-207.compute-1.amazonaws.com
 User name	Administrator
 Password	
 tdD6I4m.ZlBy47w.F8d-?dWJHczmt6(y
+
+
+rdesktop -u Administrator -g 1024x768 -p 'tdD6I4m.ZlBy47w.F8d-?dWJHczmt6(y' ec2-34-229-94-207.compute-1.amazonaws.com 
