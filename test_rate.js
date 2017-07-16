@@ -1,41 +1,21 @@
+var express = require('express');
+var app = express();
+var path = require('path');
+var mime = require('mime');
+var fs = require('fs');
 
-// This strategy editor is in BETA mode, please
-// exercise extreme caution and use exclusively at
-// your own risk. No bets can or will be refunded in
-// case of errors.
+//DB connection
+var mysql = require('mysql');
 
-// Please note the strategy editor executes arbitrary
-// javascript without a sandbox and as such, only use
-// strategies from trusted sources, as they can be
-// backdoored to lose all your money or have
-// intentional exploitable weaknesses etc.
-
-// To see the full engine API see this mirror:
-///https://github.com/kungfuant/webserver/blob/master/client_new/scripts/game-logic/script-controller.js
-
-//Engine events:
-//Getters:
-console.log('Balance: ' + engine.getBalance());
-console.log('The current payout is: ' + engine.getCurrentPayout());
-console.log('My username is: ', engine.getUsername());
-console.log('The max current bet is: ', engine.getMaxBet() / 100, ' Bits');
-console.log('The current maxWin is: ', engine.getMaxWin() / 100, ' Bits');
-// engine.getEngine() for raw engine
-
-
-//Helpers:
-console.log('Was the last game played? ', engine.lastGamePlayed() ? 'Yes' : 'No');
-console.log('Last game status: ', engine.lastGamePlay());
-
-engine.on('connect', function () {
-    console.log('Client connected, this wont happen when you run the script');
+var conn = mysql.createConnection({
+  host: '127.0.0.1',
+  user: 'root',
+  password: 'root',
+  database: 'bustapick'
 });
-
-engine.on('disconnect', function () {
-    console.log('Client disconnected');
-});
-
-//-----------------------------------------------------------------------
+conn.connect();
+//Modules 
+var dal = require('./src/model/dal');
 var array_saving = 400;
 var rate_condition_initial = 0.05;
 var invest_initial = 300;
@@ -43,7 +23,7 @@ var invest_increase = 300;
 var cooltime_initial = 10;
 var max_cum_loss = 5;
 var max_flag_count = 1;
-var min_flag_count = 10;
+var min_flag_count = 50;
 var idle_count_maximum = 100;
 
 var max_flag = 0;
@@ -71,194 +51,254 @@ var win_count = 0;
 var idle_count = 0;
 var budget = 0;
 
+//----Test
+var balance = 500000;
+var lastGamePlay = 'LOST';
+var lastGamePlayed = false;
+var crash_result = 0;
+var max_budget = 0;
+var min_budget = 100000000000;
+var winarray = [];
+var lossarray = [];
 
-engine.on('game_starting', function (info) {
-    console.log('------------------------');
-    console.log('New Competition Start');
-    if (engine.getBalance() > 1000000) {
-        invest_initial = invest_initial * 6;
-        invest_increase = invest_increase * 6;
 
-    } else if (engine.getBalance() > 700000) {
-        invest_initial = invest_initial * 5;
-        invest_increase = invest_increase * 5;
+function test() {
 
-    } else if (engine.getBalance() > 600000) {
-        invest_initial = invest_initial * 4;
-        invest_increase = invest_increase * 4;
+  dal.getRecent(conn, 73000).then((origin) => {
 
-    } else if (engine.getBalance() > 500000) {
-        invest_initial = invest_initial * 3;
-        invest_increase = invest_increase * 3;
+    var minmax = getminMax(origin);
 
-    } else if (engine.getBalance() > 350000) {
-        invest_initial = invest_initial;
-        invest_increase = invest_increase;
-
-    } 
-    /*
-    else if (engine.getBalance() < 350000) {
-        engine.stop();
-    }
-    */
-
-    if (max_flag == max_flag_count) {
-        if (rate_condition - 0.002 != 0) {
-            console.log(`Danger. Rate Condition Decreased to ${(rate_condition - 0.002)}`)
-            rate_condition -= 0.002;
+    for (l = 0; l < 70000 - array_saving; l++) {
+      if (l == 70000 - array_saving - 1) {
+        /*
+        for (qq = 0; qq < winarray.length; qq++) {
+          console.log("Win",winarray[qq]);
         }
-        max_flag = 0;
-    }
-    if ((min_flag == min_flag_count) && (rate_condition < rate_condition_initial)) {
-        console.log(`Recovery. Rate Condition Increased to ${(rate_condition + 0.002)}`)
-        rate_condition += 0.002;
-        min_flag = 0;
-    }
 
-    if (go) {
-        console.log(`Go: ${Minumum_msg} / Invest: ${invest / 100} bits`);
-        engine.placeBet(invest, Minimum_betting, false);
-        idle_count = 0;
-    } else {
-        console.log('Wait...');
-        idle_count++;
-        if (idle_count >= idle_count_maximum) {
-            console.log(`Too Loose. Rate Condition Increased to ${(rate_condition + 0.002)}`)
-            rate_condition += 0.002;
-            idle_count = 0;
+        for (qq = 0; qq < lossarray.length; qq++) {
+          console.log("Loss:",lossarray[qq]);
         }
+        */
+        process.exit();
+      }
+      console.log("Game Number:", l);
+      if (max_budget < budget) {
+        max_budget = budget;
+      }
+      if (min_budget > budget) {
+        min_budget = budget;
+      }
+      console.log(`Min-Max Budget: ${min_budget} - ${max_budget}`);
+
+
+      //for (l = 0; l < 50; l++) {
+      crash_result = origin[minmax["min"] + l] * 100;
+      start();
+      crash();
+
+
     }
-});
+  }).catch((error) => {
+    console.log(error);
+    res.send(error);
+  });
+};
 
+function getminMax(array) {
+  value = {}
+  value['min'] = 100000000;
+  value['max'] = 0;
 
-engine.on('game_crash', function (data) {
-    console.log('Result: ', data.game_crash / 100);
+  for (key in array) {
+    if (parseFloat(key) > value['max']) {
+      value['max'] = parseFloat(key);
+    }
+    if (parseFloat(key) < value['min']) {
+      value['min'] = parseFloat(key);
+    }
+  }
+  return value;
 
-    if (engine.lastGamePlay() == 'LOST' && engine.lastGamePlayed() == true) {
-        console.log(`~~ Lose ~~ ${invest / 100} bits`)
-        cum_loss++;
-        game_count++;
-        budget -= (invest / 100);
-        invest += (invest_increase * cum_loss);
-        //invest = invest*2;
-        if (cum_loss == max_cum_loss) {
-            console.log('Cool Time Set')
-            cooltime_flag = true;
-            cooltime = cooltime_initial;
-            invest = invest_initial;
-            max_flag++;
-            min_flag = 0;
-            go = false;
-        }
-    } else if (engine.lastGamePlay() == 'WON' && engine.lastGamePlayed() == true) {
-        console.log(`**!! Win !!** ${(invest / 100) * ((Minimum_betting / 100) - 1)} bits`)
-        cum_loss = 0;
-        game_count++;
-        win_count++;
-        budget += ((invest / 100) * ((Minimum_betting / 100) - 1));
-        max_flag = 0;
-        min_flag++;
-        invest = invest_initial;
+}
+function start() {
+  console.log('------------------------');
+  console.log('New Competition Start');
+  /*
+  if (balance > 1000000) {
+    invest_initial = invest_initial * 6;
+    invest_increase = invest_increase * 6;
 
+  } else if (balance > 700000) {
+    invest_initial = invest_initial * 5;
+    invest_increase = invest_increase * 5;
+
+  } else if (balance > 600000) {
+    invest_initial = invest_initial * 4;
+    invest_increase = invest_increase * 4;
+
+  } else if (balance > 500000) {
+    invest_initial = invest_initial * 3;
+    invest_increase = invest_increase * 3;
+
+  } else if (balance > 350000) {
+    invest_initial = invest_initial;
+    invest_increase = invest_increase;
+
+  } else if (balance < 350000) {
+    console.log("Bankrup!")
+    process.exit();
+  }
+*/
+
+  if (max_flag == max_flag_count) {
+    if (rate_condition - 0.002 != 0) {
+      console.log(`Danger. Rate Condition Decreased to ${(rate_condition - 0.002)}`)
+
+      rate_condition -= 0.002;
+    }
+    max_flag = 0;
+  }
+  if ((min_flag == min_flag_count) && (rate_condition < rate_condition_initial)) {
+    console.log(`Recovery. Rate Condition Increased to ${(rate_condition + 0.002)}`)
+
+    rate_condition += 0.002;
+    min_flag = 0;
+  }
+
+  if (go) {
+    console.log(`Go: ${Minumum_msg} / Invest: ${invest / 100} bits`);
+    //engine.placeBet(invest, Minimum_betting, false);
+    idle_count = 0;
+    lastGamePlayed = true;
+  } else {
+    console.log('Wait...');
+    idle_count++;
+    lastGamePlayed = false;
+    if (idle_count >= idle_count_maximum) {
+      console.log(`Too Loose. Rate Condition Increased to ${(rate_condition + 0.002)}`)
+
+      rate_condition += 0.002;
+      idle_count = 0;
+    }
+  }
+};
+
+function crash() {
+  console.log('Result: ', crash_result / 100);
+  if (lastGamePlayed == true) {
+    if (crash_result >= Minimum_betting) {
+      lastGamePlay = 'WON';
+      winarray.push(Minimum_betting / 100);
     } else {
-        cum_loss = 0;
-        invest = invest_initial;
+      lastGamePlay = 'LOST';
+      lossarray.push(Minimum_betting / 100);
     }
-    console.log(`Cum_Loss: ${cum_loss} / Cooltime : ${cooltime_flag} / CoolTime: ${cooltime}`);
-    console.log(`Win/Game: ${win_count}/${game_count}, ${Math.round(win_count / game_count * 100)}% / Budget: ${Math.round(budget)} / Rate Condition: ${rate_condition}`);
-    if (record_array.length == array_saving) {
-        record_array.shift();
-        record_array.push(data.game_crash);
-    } else {
-        record_array.push(data.game_crash);
-    }
+  }
 
-    if (cooltime_flag == true) {
-        if (cooltime > 0) {
-            cooltime--;
-        } else if (cooltime == 0) {
-            console.log('Cool time Released.')
-            cooltime_flag = false;
-            calculate();
-        }
-    } else {
-        calculate();
+  if (lastGamePlay == 'LOST' && lastGamePlayed == true) {
+    console.log(`~~ Lose ~~ ${invest / 100} bits`)
+    cum_loss++;
+    game_count++;
+    budget -= (invest / 100);
+    invest += (invest_increase * cum_loss);
+    //invest += invest*2;
+    if (cum_loss == max_cum_loss) {
+      console.log('Cool Time Set')
+      cooltime_flag = true;
+      cooltime = cooltime_initial;
+      invest = invest_initial;
+      max_flag++;
+      min_flag = 0;
+      go = false;
     }
-});
+  } else if (lastGamePlay == 'WON' && lastGamePlayed == true) {
+    console.log(`**!! Win !!** ${(invest / 100) * ((Minimum_betting / 100) - 1)} bits`)
+    cum_loss = 0;
+    game_count++;
+    win_count++;
+    budget += ((invest / 100) * ((Minimum_betting / 100) - 1));
+    max_flag = 0;
+    min_flag++;
+    invest = invest_initial;
+
+  } else {
+    cum_loss = 0;
+    invest = invest_initial;
+  }
+  console.log(`Cum_Loss: ${cum_loss} / Cooltime : ${cooltime_flag} / CoolTime: ${cooltime}`);
+  console.log(`Win/Game: ${win_count}/${game_count}, ${Math.round(win_count / game_count * 100)}% / Budget: ${Math.round(budget)} / Rate Condition: ${rate_condition}`);
+  if (record_array.length == array_saving) {
+    record_array.shift();
+    record_array.push(crash_result);
+  } else {
+    record_array.push(crash_result);
+  }
+
+  if (cooltime_flag == true) {
+    if (cooltime > 0) {
+      cooltime--;
+    } else if (cooltime == 0) {
+      console.log('Cool time Released.')
+      cooltime_flag = false;
+      calculate();
+    }
+  } else {
+    calculate();
+  }
+};
 
 
 function calculate() {
-    prev = 0;
+  prev = 0;
+  go = false;
+  possible_array = [];
+  t = 0;
+  Minimum_rate = 100;
+  Minumum_msg = 'Not Found';
+
+  // 1.01 ~ 20.00
+  for (i = 101; i <= 2000; i++) {
+    count = 0;
+    for (j = record_array.length - 1; j >= 0; j--) {
+      var record = record_array[j];
+
+      if (record >= i) {
+        break;
+      } else {
+        count++;
+      }
+    }
+    loss_rate = rate_array[i];
+
+    next_loss_rate = Math.pow(loss_rate, count + 1);
+
+    if (next_loss_rate <= rate_condition && i >= 400) {
+      if (prev == next_loss_rate) {
+      }
+      else {
+        let msg = `${(i / 100)} x   : ${Math.round(next_loss_rate * 10000) / 100}% => ${Math.round(next_loss_rate * loss_rate * 10000) / 100}%, ${count} Passed`;
+        //console.log(msg);
+        if (next_loss_rate < Minimum_rate) {
+          Minimum_rate = next_loss_rate;
+          Minimum_betting = i;
+          Minumum_msg = msg;
+        }
+        possible_array[t] = msg;
+        t++;
+        prev = next_loss_rate;
+      }
+    }
+  }
+  //console.log(`1.01-20.00 Minimum : ${Minumum_msg}`)
+
+
+  if (possible_array.length > 0) {
+    go = true;
+  } else {
     go = false;
-    possible_array = [];
-    t = 0;
-    Minimum_rate = 100;
-    Minumum_msg = 'Not Found';
-
-    // 1.01 ~ 20.00
-    for (i = 101; i <= 2000; i++) {
-        count = 0;
-        for (j = record_array.length - 1; j >= 0; j--) {
-            var record = record_array[j];
-
-            if (record >= i) {
-                break;
-            } else {
-                count++;
-            }
-        }
-        loss_rate = rate_array[i];
-        next_loss_rate = Math.pow(loss_rate, count + 1);
-        if (next_loss_rate <= rate_condition && i >= 400) {
-            if (prev == next_loss_rate) {
-            }
-            else {
-                let msg = `${(i / 100)} x   : ${Math.round(next_loss_rate * 10000) / 100}% => ${Math.round(next_loss_rate * loss_rate * 10000) / 100}%, ${count} Passed`;
-                console.log(msg);
-                if (next_loss_rate < Minimum_rate) {
-                    Minimum_rate = next_loss_rate;
-                    Minimum_betting = i;
-                    Minumum_msg = msg;
-                }
-                possible_array[t] = msg;
-                t++;
-                prev = next_loss_rate;
-            }
-        }
-    }
-
-    if (possible_array.length > 0) {
-        go = true;
-    } else {
-        go = false;
-    }
+  }
 }
 
-
-//Actions:
-//Do this between the 'game_starting' and 'game_started' events
-//engine.placeBet(betInSatoshis, autoCashOutinPercent, autoPlay);
-
-//engine.cashOut(); //Do this when playing
-//engine.stop(); //Stops the strategy
-//engine.chat('Hello Spam');
-
-
-engine.on('player_bet', function (data) {
-    //   console.log('The player ', data.username, ' placed a bet. This player could be me : o.')
-});
-
-engine.on('cashed_out', function (resp) {
-    //    console.log('The player ', resp.username, ' cashed out. This could be me.');
-});
-
-engine.on('msg', function (data) {
-    //    console.log('Chat message!...');
-});
-
-engine.on('game_started', function (data) {
-    //    console.log('Game Started', data);
-});
 
 
 rate_array['110'] = 0.1;
@@ -2152,3 +2192,5 @@ rate_array['996'] = 0.9;
 rate_array['997'] = 0.9;
 rate_array['998'] = 0.9;
 rate_array['999'] = 0.9;
+
+test();

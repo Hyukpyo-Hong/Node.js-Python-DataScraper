@@ -84,86 +84,17 @@ exports.getRecent = (conn, number) => {
                 reject(err);
             } else {
                 var recent = {};
+                
                 for (i in rows) {
                     recent[rows[i].game] = rows[i].rate;
                 }
+
+                console.log("Fetched");                
                 resolve(recent);
             }
         });
     });
 }
-
-exports.test_model = (max_array, rate_array, recent_array) => {
-    return new Promise((resolve, reject) => {
-        const log = console.log;
-        max_array_minMax = getminMax(max_array);
-        recent_array_minMax = getminMax(recent_array);
-        max_array_min = max_array_minMax['min'];
-        max_array_max = max_array_minMax['max'];
-        recent_array_min = recent_array_minMax['min'];
-        recent_array_max = recent_array_minMax['max'];
-        var rate_condition = 0.05;
-
-        var test_size = 135;
-        var test_array_min = recent_array_min;
-
-        var test_win = 0;
-        var test_lose = 0;
-        var test_bankroll = 10000;
-        var test_initial = 100;
-        var test_prev_result = true;
-        var test_array_max;
-        var Minimum_rate;
-        var prev;
-        var loss_rate;
-        var next_loss_rate;
-        
-
-        while (test_array_min < recent_array_max - test_size) {
-            test_array_max = test_array_min + test_size;
-            Minimum_rate = 100;
-
-            for (i = max_array_max * 100; i >= max_array_min * 100; i--) {
-                var max = max_array[i / 100];
-                var count = 0;
-                Minimum_rate = 0;
-
-
-                for (j = test_array_max; j >= test_array_min; j--) {
-                    var temp = recent_array[j];
-                    if (temp.search(",") >= 0) {
-                        temp = removeCommas(temp);
-                    }
-                    if (temp >= (i / 100)) {
-                        break;
-                    } else {
-                        count++;
-                    }
-                }
-
-                prev = 0;
-
-                loss_rate = rate_array[i / 100];
-                next_loss_rate = Math.pow(loss_rate, count + 1);
-                if (next_loss_rate >= 0) {
-                    if (next_loss_rate <= rate_condition && i >= 200) {
-                        if (prev == next_loss_rate) {
-                        }
-                        else {
-                            if (next_loss_rate < Minimum_rate) {
-                                Minimum_rate =  0;
-                            }
-                        }
-                    }
-                }
-            }
-            test_array_min++;
-        }
-        resolve("Finish");
-    });
-
-}
-
 
 // max array -> Maximum lose count, [rate,max]
 // rate array -> Failure rate per one game [rate, loss]
