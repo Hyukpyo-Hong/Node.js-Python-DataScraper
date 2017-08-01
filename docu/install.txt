@@ -1,3 +1,5 @@
+sudo yum update -y
+
 
 python35-setuptools.noarch 
 sudo alternatives --set python /usr/bin/python3.5
@@ -16,8 +18,15 @@ sudo pip3 install cfscrape;
 sudo pip3 install bs4;
 sudo pip3 install lxml;
 
-curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -.
-sudo yum -y install nodejs
+<Node JS - this way is too long to complie. Find other way!>
+sudo yum install -y gcc gcc-c++ make openssl-devel
+curl -O https://nodejs.org/dist/v6.11.1/node-v6.11.1.tar.gz
+tar -xvf node-v6.11.1.tar.gz && rm node-v6.11.1.tar.gz 
+cd node-v6.11.1/
+./configure
+make
+sudo make install
+
 
 sudo yum install git
 git clone https://github.com/Hyukpyo-Hong/NodeJS_Python_DataPicking.git
@@ -32,7 +41,7 @@ git clone https://github.com/Hyukpyo-Hong/NodeJS_Python_DataPicking.git
     rm -rf mysql
 }
 
-sudo  wget http://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
+sudo wget http://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
 sudo tar -xvf MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
 sudo yum -y install MySQL-client-5.6.23-1.el7.x86_64.rpm
 sudo yum install MySQL-shared-compat-5.6.23-1.el7.x86_64.rpm
@@ -76,7 +85,7 @@ SELECT * FROM max_table INTO OUTFILE '/var/lib/mysql-files/max.csv' FIELDS TERMI
 SELECT game, replace(rate,',','') FROM record order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 SELECT * FROM rate INTO OUTFILE '/var/lib/mysql-files/rate.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
-sudo ssh -i ./hong.pem ec2-user@ec2-54-242-161-63.compute-1.amazonaws.com
+sudo ssh -i ./hong.pem ec2-user@ec2-54-204-184-186.compute-1.amazonaws.com
 
 rdesktop -u Administrator -g 1024x700 -p 'tdD6I4m.ZlBy47w.F8d-?dWJHczmt6(y' ec2-34-229-94-207.compute-1.amazonaws.com 
 

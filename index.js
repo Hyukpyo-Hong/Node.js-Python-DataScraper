@@ -92,7 +92,6 @@ function max_method() {
     console.log(error);
     res.send(error);
   });
-
 }
 
 function rate_method() {

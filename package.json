@@ -4,7 +4,7 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node receiver.js"
   },
   "author": "",
   "license": "ISC",
@@ -13,6 +13,7 @@
     "eslint": "^4.1.1",
     "express": "^4.15.3",
     "mysql": "^2.13.0",
-    "pug": "^2.0.0-rc.2"
+    "pug": "^2.0.0-rc.2",
+    "socket.io": "^1.7.3"
   }
 }
