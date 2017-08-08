@@ -63,6 +63,7 @@ create database bustapick;
 use bustapick;
 create table record(game int primary key, rate varchar(10));
 create table max_table(rate varchar(10) primary key, max int);
+create table game(date datetime primary key, rate varchar(10), game int);
 load data infile '/var/lib/mysql-files/record.csv' into table record fields terminated by',' lines terminated by '\n';
 load data infile '/var/lib/mysql-files/max.csv' into table max_table fields terminated by',' lines terminated by '\n';
 load data infile '/var/lib/mysql-files/rate.csv' into table rate fields terminated by',' lines terminated by '\n';
@@ -90,3 +91,6 @@ sudo ssh -i ./hong.pem ec2-user@ec2-54-204-184-186.compute-1.amazonaws.com
 rdesktop -u Administrator -g 1024x700 -p 'tdD6I4m.ZlBy47w.F8d-?dWJHczmt6(y' ec2-34-229-94-207.compute-1.amazonaws.com 
 
 rdesktop -u Administrator -g 1024x700 -p '68@%WYE!=bcI)j438)SjknS(XVr=g@2N' ec2-34-230-32-69.compute-1.amazonaws.com
+
+
+openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365
