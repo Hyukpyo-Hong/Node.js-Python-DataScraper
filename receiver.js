@@ -42,7 +42,6 @@ app.post('/crash', (req, res) => {
     var date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
     var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
     var dateTime = date + ' ' + time;
-    console.log(dateTime);
     var sql = 'INSERT INTO game values(?,?,null)';
     var params = [dateTime, result];
     conn.query(sql, params, function (err, results) {
@@ -56,7 +55,7 @@ app.post('/crash', (req, res) => {
 
     get_record_array().then((value) => {
         calculate();
-        console.log("Betting: ",Minimum_betting/100," Rate: ",Minimum_rate*100,"%");
+        console.log("Betting: ", Minimum_betting / 100, " Rate: ", Minimum_rate * 100, "%");
         res.status(200).header("Access-Control-Allow-Origin", "*").send("");
     });
 
@@ -68,13 +67,14 @@ app.get('/', function (req, res) {
 });
 function get_record_array() {
     return new Promise((resolve, reject) => {
-        var sql = "select * from game order by date LIMIT 400 OFFSET 0"
+        var sql = "select * from game order by date desc limit 0,200";
         conn.query(sql, function (err, rows, fields) {
             if (err) {
                 console.log(err);
             } else {
                 record_array = [];
                 for (var i in rows) {
+                    
                     record_array.push(rows[i].rate);
                 }
                 resolve(true);
@@ -94,17 +94,17 @@ function calculate() {
 
     var prev = 0;
     var possible_array = [];
-    var t = 0;    
+    var t = 0;
     var Minumum_msg = 'Not Found';
-    Minimum_betting='None';
+    Minimum_betting = 'None';
     Minimum_rate = 100;
 
 
     // 1.01 ~ 20.00
     for (i = 101; i <= 2000; i++) {
         count = 0;
-        for (j = record_array.length - 1; j >= 0; j--) {
-            var record = record_array[j];
+        for (j = 0;j < record_array.length ; j++) {
+            var record = record_array[j];           
 
             if (record >= i) {
                 break;
@@ -114,7 +114,7 @@ function calculate() {
         }
         loss_rate = rate_array[i];
         next_loss_rate = Math.pow(loss_rate, count + 1);
-        if (next_loss_rate <= rate_condition && i >= 200) {
+        if (next_loss_rate <= rate_condition && i > 250) {
             if (prev == next_loss_rate) {
             }
             else {

@@ -1,7 +1,3 @@
-var express = require('express');
-var app = express();
-var path = require('path');
-var mime = require('mime');
 var fs = require('fs');
 
 //DB connection
@@ -17,14 +13,18 @@ conn.connect();
 //Modules 
 var dal = require('./src/model/dal');
 var array_saving = 400;
-var rate_condition_initial = 0.05;
+var rate_condition_initial = 0.2;
 var invest_initial = 1000;
 var invest_increase = 1000;
 var cooltime_initial = 10;
-var max_cum_loss = 5;
+var max_cum_loss = 20;
 var max_flag_count = 1;
-var min_flag_count = 50;
+var min_flag_count = 20;
 var idle_count_maximum = 100;
+
+var max_continue_lost = 30;
+var continue_lost = 0;
+var prev_betting = 0;
 
 var max_flag = 0;
 var min_flag = 0;
@@ -58,37 +58,44 @@ var lastGamePlayed = false;
 var crash_result = 0;
 var max_budget = 0;
 var min_budget = 100000000000;
-var winarray = [];
-var lossarray = [];
 
+
+
+function log() {
+  for (i = 0; i < arguments.length; i++) {
+    fs.appendFileSync('log.txt', arguments[i] + " ", encoding = 'utf8');
+  }
+  fs.appendFileSync('log.txt', "\n", encoding = 'utf8');
+}
 
 function test() {
+  console.log("Start");
+  fs.unlink('log.txt', function (err) {
+    if (err) {
+    } else {
+      console.log('log.txt File deleted!');
+    }
+    ;
 
+  });
   dal.getRecent(conn, 73000).then((origin) => {
 
     var minmax = getminMax(origin);
 
     for (l = 0; l < 70000 - array_saving; l++) {
       if (l == 70000 - array_saving - 1) {
-        /*
-        for (qq = 0; qq < winarray.length; qq++) {
-          console.log("Win",winarray[qq]);
-        }
 
-        for (qq = 0; qq < lossarray.length; qq++) {
-          console.log("Loss:",lossarray[qq]);
-        }
-        */
+        console.log("Finish");
         process.exit();
       }
-      console.log("Game Number:", l);
+      log("Game Number:", l);
       if (max_budget < budget) {
         max_budget = budget;
       }
       if (min_budget > budget) {
         min_budget = budget;
       }
-      console.log(`Min-Max Budget: ${min_budget} - ${max_budget}`);
+      log(`Min-Max Budget: ${min_budget} - ${max_budget}`);
 
 
       //for (l = 0; l < 50; l++) {
@@ -99,7 +106,7 @@ function test() {
 
     }
   }).catch((error) => {
-    console.log(error);
+    log(error);
     res.send(error);
   });
 };
@@ -121,8 +128,8 @@ function getminMax(array) {
 
 }
 function start() {
-  console.log('------------------------');
-  console.log('New Competition Start');
+  log('------------------------');
+  log('New Competition Start');
   /*
   if (balance > 1000000) {
     invest_initial = invest_initial * 6;
@@ -145,74 +152,91 @@ function start() {
     invest_increase = invest_increase;
 
   } else if (balance < 350000) {
-    console.log("Bankrup!")
+    log("Bankrup!")
     process.exit();
   }
 */
 
   if (max_flag == max_flag_count) {
     if (rate_condition - 0.002 != 0) {
-      console.log(`Danger. Rate Condition Decreased to ${(rate_condition - 0.002)}`)
+      log(`Danger. Rate Condition Decreased to ${(rate_condition - 0.002)}`)
 
-      rate_condition -= 0.002;
+      //rate_condition -= 0.002;
     }
     max_flag = 0;
   }
   if ((min_flag == min_flag_count) && (rate_condition < rate_condition_initial)) {
-    console.log(`Recovery. Rate Condition Increased to ${(rate_condition + 0.002)}`)
+    log(`Recovery. Rate Condition Increased to ${(rate_condition + 0.002)}`)
 
-    rate_condition += 0.002;
+    //rate_condition += 0.002;
     min_flag = 0;
   }
 
   if (go) {
-    console.log(`Go: ${Minumum_msg} / Invest: ${invest / 100} bits`);
+    log(`Go: ${Minumum_msg} / Invest: ${invest / 100} bits`);
     //engine.placeBet(invest, Minimum_betting, false);
     idle_count = 0;
     lastGamePlayed = true;
   } else {
-    console.log('Wait...');
+    log('Wait...');
     idle_count++;
     lastGamePlayed = false;
     if (idle_count >= idle_count_maximum) {
-      console.log(`Too Loose. Rate Condition Increased to ${(rate_condition + 0.002)}`)
+      log(`Too Loose. Rate Condition Increased to ${(rate_condition + 0.002)}`)
 
-      rate_condition += 0.002;
+      //rate_condition += 0.002;
       idle_count = 0;
     }
   }
 };
 
 function crash() {
-  console.log('Result: ', crash_result / 100);
+  log('Result: ', crash_result / 100);
   if (lastGamePlayed == true) {
     if (crash_result >= Minimum_betting) {
       lastGamePlay = 'WON';
-      winarray.push(Minimum_betting / 100);
     } else {
       lastGamePlay = 'LOST';
-      lossarray.push(Minimum_betting / 100);
     }
   }
 
+
+
+
   if (lastGamePlay == 'LOST' && lastGamePlayed == true) {
-    console.log(`~~ Lose ~~ ${invest / 100} bits`)
+    log(`~~ Lose ~~ ${invest / 100} bits`)
     cum_loss++;
     game_count++;
     budget -= (invest / 100);
-    invest += (invest_increase * cum_loss);
-    //invest += invest*2;
+    //invest += (invest_increase * cum_loss);
+    invest = invest * 1.2;
     if (cum_loss == max_cum_loss) {
-      console.log('Cool Time Set')
+      log('Cool Time Set')
       cooltime_flag = true;
       cooltime = cooltime_initial;
-      invest = invest_initial;
+      //invest = invest_initial;
       max_flag++;
       min_flag = 0;
       go = false;
     }
+
+    if (prev_betting == Minimum_betting) {
+      continue_lost++;
+      if (continue_lost >= max_continue_lost) {
+
+
+
+      }
+
+    } else {
+      continue_lost = 0;
+    }
+
+
+
+
   } else if (lastGamePlay == 'WON' && lastGamePlayed == true) {
-    console.log(`**!! Win !!** ${(invest / 100) * ((Minimum_betting / 100) - 1)} bits`)
+    log(`**!! Win !!** ${(invest / 100) * ((Minimum_betting / 100) - 1)} bits`)
     cum_loss = 0;
     game_count++;
     win_count++;
@@ -221,12 +245,15 @@ function crash() {
     min_flag++;
     invest = invest_initial;
 
+
+    continue_lost = 0;
+
   } else {
     cum_loss = 0;
-    invest = invest_initial;
+    //invest = invest_initial;
   }
-  console.log(`Cum_Loss: ${cum_loss} / Cooltime : ${cooltime_flag} / CoolTime: ${cooltime}`);
-  console.log(`Win/Game: ${win_count}/${game_count}, ${Math.round(win_count / game_count * 100)}% / Budget: ${Math.round(budget)} / Rate Condition: ${rate_condition}`);
+  log(`Cum_Loss: ${cum_loss} / Cooltime : ${cooltime_flag} / CoolTime: ${cooltime}`);
+  log(`Win/Game: ${win_count}/${game_count}, ${Math.round(win_count / game_count * 100)}% / Budget: ${Math.round(budget)} / Rate Condition: ${rate_condition}`);
   if (record_array.length == array_saving) {
     record_array.shift();
     record_array.push(crash_result);
@@ -238,7 +265,7 @@ function crash() {
     if (cooltime > 0) {
       cooltime--;
     } else if (cooltime == 0) {
-      console.log('Cool time Released.')
+      log('Cool time Released.')
       cooltime_flag = false;
       calculate();
     }
@@ -277,7 +304,7 @@ function calculate() {
       }
       else {
         let msg = `${(i / 100)} x   : ${Math.round(next_loss_rate * 10000) / 100}% => ${Math.round(next_loss_rate * loss_rate * 10000) / 100}%, ${count} Passed`;
-        //console.log(msg);
+        //log(msg);
         if (next_loss_rate < Minimum_rate) {
           Minimum_rate = next_loss_rate;
           Minimum_betting = i;
@@ -289,7 +316,7 @@ function calculate() {
       }
     }
   }
-  //console.log(`1.01-20.00 Minimum : ${Minumum_msg}`)
+  //log(`1.01-20.00 Minimum : ${Minumum_msg}`)
 
 
   if (possible_array.length > 0) {
@@ -297,6 +324,24 @@ function calculate() {
   } else {
     go = false;
   }
+
+  if (record_array[record_array.length - 1] < 190
+    && record_array[record_array.length - 5] < 190
+  ) {
+    log("Cut!"
+      , " / ", record_array[record_array.length - 1]
+      , " / ", record_array[record_array.length - 2]
+      , " / ", record_array[record_array.length - 3]
+      , " / ", record_array[record_array.length - 4]
+      , " / ", record_array[record_array.length - 5]
+      , " / ", record_array[record_array.length - 6]
+    )
+    go = false;
+  }
+
+
+
+
 }
 
 
@@ -2193,4 +2238,6 @@ rate_array['997'] = 0.9;
 rate_array['998'] = 0.9;
 rate_array['999'] = 0.9;
 
+
 test();
+
