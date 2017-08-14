@@ -1,10 +1,10 @@
-var fs = require('fs');
+var a =500;
 function log() {
-        
-    for(i = 0; i < arguments.length; i++) {
-        fs.appendFileSync('log2.txt', arguments[i]+" ", encoding = 'utf8');
+    for(i = 0; i <10; i++) {
+        a = Math.round(a*1.2);
+        console.log(a);
     }
-    fs.appendFileSync('log2.txt',"\n", encoding = 'utf8');
+    
   }
 
-log(3,4,5,6,"34");
+log();

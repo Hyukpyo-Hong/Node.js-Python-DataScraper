@@ -13,13 +13,11 @@ conn.connect();
 //Modules 
 var dal = require('./src/model/dal');
 var array_saving = 200;
-var rate_condition = 0.2;
-var invest = 1000;
-
-var max_continue_lost = 30;
-var continue_lost = 0;
-var prev_betting = 0;
-
+var rate_condition = 1;
+var invest;
+var invest_initial = 2;
+var real_invest = 0;
+var condition = 0;
 
 var go = false;
 var record_array = [];
@@ -35,68 +33,84 @@ var next_loss_rate;
 var t = 0;
 var count = 0;
 
-var cum_loss = 0;
+
+
+//----Test
 var game_count = 0;
 var win_count = 0;
 var budget = 0;
-
-//----Test
-var balance = 0;
 var lastGamePlay = 'LOST';
 var lastGamePlayed = false;
 var crash_result = 0;
 var max_budget = 0;
 var min_budget = 100000000000;
 
-
-
 function log() {
+
   for (i = 0; i < arguments.length; i++) {
     fs.appendFileSync('log.txt', arguments[i] + " ", encoding = 'utf8');
   }
   fs.appendFileSync('log.txt', "\n", encoding = 'utf8');
+
+}
+
+function init() {
+  game_count = 0;
+  win_count = 0;
+  budget = 0;
+  crash_result = 0;
+  max_budget = 0;
+  min_budget = 100000000000;
+  condition = invest_initial*Math.pow(1.2, 30);
+  invest = invest_initial;
+  
 }
 
 function test() {
-  console.log("Start");
-  fs.unlink('log.txt', function (err) {
-    if (err) {
-    } else {
-      console.log('log.txt File deleted!');
-    }
-    ;
 
-  });
   dal.getRecent(conn, 73000).then((origin) => {
 
     var minmax = getminMax(origin);
 
-    for (l = 0; l < 70000 - array_saving; l++) {
-      if (l == 70000 - array_saving - 1) {
+    for (p = 30; p <= 30; p += 2) {
+      init();
+      console.log("P: ", p, " Condition: ", condition);
+      console.log("Start");
 
-        console.log("Finish");
-        process.exit();
+      fs.unlink('log.txt', function (err) {
+        if (err) {
+        } else {
+          console.log('log.txt File deleted!');
+        };
+      });
+      for (l = 0; l < 70000 - array_saving; l++) {
+        if (l == 70000 - array_saving - 1) {
+
+          console.log("Finish");
+          console.log(`Min-Max Budget: ${Math.round(min_budget)} - ${Math.round(max_budget)}`);
+          console.log(`Win/Game: ${win_count}/${game_count}, ${Math.round(win_count / game_count * 100)}% / Budget: ${Math.round(budget)}`);
+          //process.exit();
+          break;
+        }
+        log("Game Number:", l);
+        if (max_budget < budget) {
+          max_budget = budget;
+        }
+        if (min_budget > budget) {
+          min_budget = budget;
+        }
+
+        //for (l = 0; l < 50; l++) {
+        crash_result = origin[minmax["min"] + l] * 100;
+        start();
+        crash();
       }
-      log("Game Number:", l);
-      if (max_budget < budget) {
-        max_budget = budget;
-      }
-      if (min_budget > budget) {
-        min_budget = budget;
-      }
-      log(`Min-Max Budget: ${min_budget} - ${max_budget}`);
-
-
-      //for (l = 0; l < 50; l++) {
-      crash_result = origin[minmax["min"] + l] * 100;
-      start();
-      crash();
-
-
     }
   }).catch((error) => {
     log(error);
     res.send(error);
+  }).then(() => {
+    process.exit();
   });
 };
 
@@ -121,8 +135,13 @@ function start() {
   log('New Competition Start');
 
   if (go) {
-    log(`\t\t\t\t\t\t\tGo: ${Minumum_msg} / Invest: ${invest / 100} bits`);
+    log(`\t\t\t\t\t\t\tGo: ${Minumum_msg} / Invest: ${invest} bits`);
     lastGamePlayed = true;
+    if ((invest <= condition)) {
+      Minimum_betting = (Minimum_betting + 200) * 0.5;
+      log("\t\t\t\t\t\t\tUpdated Betting: ", Minimum_betting / 100);
+    }
+
   } else {
     log('Wait...');
     lastGamePlayed = false;
@@ -139,48 +158,36 @@ function crash() {
     }
   }
 
-
   if (lastGamePlay == 'LOST' && lastGamePlayed == true) {
-    log(`\t\t\t\t\t\t\t~~ Lose ~~ ${invest / 100} bits`)
-    cum_loss++;
+    log(`\t\t\t\t\t\t\t~~ Lose ~~ ${invest} bits`)
     game_count++;
-    budget -= (invest / 100);    
-    invest = invest * 1.2;
-
-    if (prev_betting == Minimum_betting) {
-      continue_lost++;
-      if (continue_lost >= max_continue_lost) {
-
-      }
-
-    } else {
-      continue_lost = 0;
-    }
+    budget -= invest;
+    real_invest = real_invest *1.2;
+    invest = Math.round(real_invest);
 
 
   } else if (lastGamePlay == 'WON' && lastGamePlayed == true) {
-    log(`\t\t\t\t\t\t\t**!! Win !!** ${(invest / 100) * ((Minimum_betting / 100) - 1)} bits`)
-    cum_loss = 0;
+    log(`\t\t\t\t\t\t\t**!! Win !!** ${(invest) * ((Minimum_betting / 100) - 1)} bits`)
     game_count++;
     win_count++;
-    budget += ((invest / 100) * ((Minimum_betting / 100) - 1));
-
+    budget += ((invest) * ((Minimum_betting / 100) - 1));
     continue_lost = 0;
+    real_invest = invest_initial;
+    invest = invest_initial;
 
   } else {
-    cum_loss = 0;
+
   }
-  log(`Cum_Loss: ${cum_loss}`);
+  log(`Min-Max Budget: ${Math.round(min_budget)} - ${Math.round(max_budget)}`);
   log(`Win/Game: ${win_count}/${game_count}, ${Math.round(win_count / game_count * 100)}% / Budget: ${Math.round(budget)}`);
-  
+
   if (record_array.length == array_saving) {
     record_array.shift();
     record_array.push(crash_result);
   } else {
     record_array.push(crash_result);
   }
-
-    calculate();
+  calculate();
 };
 
 
@@ -211,8 +218,7 @@ function calculate() {
     if (next_loss_rate <= rate_condition && i >= 400) {
       if (prev == next_loss_rate) {
       }
-      e
-      se {
+      else {
         let msg = `${(i / 100)} x   : ${Math.round(next_loss_rate * 10000) / 100}% => ${Math.round(next_loss_rate * loss_rate * 10000) / 100}%, ${count} Passed`;
         if (next_loss_rate < Minimum_rate) {
           Minimum_rate = next_loss_rate;
