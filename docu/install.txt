@@ -67,7 +67,7 @@ create table game(date datetime primary key, rate varchar(10), game int);
 create table rate(rate varchar(10) primary key, loss varchar(10));
 
 --For Win
-load data infile 'C:/Users/hp/Documents/NodeJS_Python_DataPicking/docu/rate.csv'  into table record fields terminated by',' lines terminated by '\n';
+load data local infile 'C:/Users/hhong/Projects/NodeJS_Python_DataPicking/docu/record.csv' into table record fields terminated by',' lines terminated by '\n';
 
 --For Ubuntu
 load data infile '/var/lib/mysql-files/record.csv' into table record fields terminated by',' lines terminated by '\n';
