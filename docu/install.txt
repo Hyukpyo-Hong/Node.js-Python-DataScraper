@@ -64,9 +64,16 @@ use bustapick;
 create table record(game int primary key, rate varchar(10));
 create table max_table(rate varchar(10) primary key, max int);
 create table game(date datetime primary key, rate varchar(10), game int);
+create table rate(rate varchar(10) primary key, loss varchar(10));
+
+--For Win
+load data infile 'C:/Users/hp/Documents/NodeJS_Python_DataPicking/docu/rate.csv'  into table record fields terminated by',' lines terminated by '\n';
+
+--For Ubuntu
 load data infile '/var/lib/mysql-files/record.csv' into table record fields terminated by',' lines terminated by '\n';
 load data infile '/var/lib/mysql-files/max.csv' into table max_table fields terminated by',' lines terminated by '\n';
 load data infile '/var/lib/mysql-files/rate.csv' into table rate fields terminated by',' lines terminated by '\n';
+
 
 
 

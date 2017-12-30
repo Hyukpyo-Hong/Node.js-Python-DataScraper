@@ -24,7 +24,6 @@ conn.connect();
 var dal = require('./src/model/dal');
 
 
-
 app.get('/downall', (req, res) => {
   var file = __dirname + '/records.csv';
   console.log(file);
@@ -58,7 +57,6 @@ app.get('/getall', (req, res) => {
 const id = Math.floor(Math.random() * (1000 - 1 + 1)) + 1;
 
 app.get('/', (req, res) => {
-
   if (req.query.id == id) {
     dal.getMax(conn).then((max_array) => {
       dal.getRecent(conn, 300).then((recent_array) => {
@@ -114,13 +112,8 @@ function rate_method() {
 }
 
 console.log("\n\n\n------------------------------------------------------------");
-rate_method();
+//rate_method();
 
-
-
-
-
-/*
 //Server Launch
 var port = 3000
 var addr = "http://ec2-54-186-19-191.us-west-2.compute.amazonaws.com:" + port + "?id=" + id;
@@ -129,4 +122,3 @@ app.listen(port, () => {
   console.log("Sever launced at: ", addr);
   console.log("Test: ", addr2);
 })
-*/
