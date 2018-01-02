@@ -15,7 +15,7 @@ var mysql = require('mysql');
 var conn = mysql.createConnection({
   host: '127.0.0.1',
   user: 'root',
-  password: 'root',
+  password: 'fhzkfmsh12',
   database: 'bustapick'
 });
 conn.connect();
@@ -25,8 +25,7 @@ var dal = require('./src/model/dal');
 
 
 app.get('/downall', (req, res) => {
-  var file = __dirname + '/records.csv';
-  console.log(file);
+  var file = __dirname + '/records.csv';  
 
   dal.downall(conn, fs, file).then(() => {
     var filename = path.basename(file);

@@ -1,73 +1,48 @@
 sudo yum update -y
+sudo yum install -y mysql57* python36* gcc64* && sudo pip-3.6 install cfscrape lxml beautifulsoup4 python-dateutil && sudo alternatives --set python /usr/bin/python3.6
+sudo wget http://cdn.mysql.com/Downloads/Connector-Python/mysql-connector-python-2.0.4.zip#md5=3df394d89300db95163f17c843ef49df && sudo unzip mysql-connector-python-2.0.4.zip && cd  ./mysql-connector-python-2.0.4 && sudo python setup.py install
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.6/install.sh | bash && . ~/.nvm/nvm.sh && nvm install 6.11.5 && node -e "console.log('Running Node.js ' + process.version)"
+
+sudo service mysqld start && sudo mysqld_safe --skip-grant-tables 
+mysql -u root
+    use mysql; 
+    update user set authentication_string=PASSWORD("fhzkfmsh12") where User='root';        
+    DELETE FROM mysql.user WHERE User='';
+    GRANT ALL ON *.* to root@localhost IDENTIFIED BY 'fhzkfmsh12'; 
+    GRANT ALL ON *.* to root@'%' IDENTIFIED BY 'fhzkfmsh12'; 
+    flush privileges;
+    
+    create database bustapick;
+    use bustapick;
+    create table record(game int primary key, rate float(10,2), date datetime);
+    create table max_table(rate varchar(10) primary key, max int);
+    create table game(date datetime primary key, rate varchar(10), game int);
+    create table rate(rate varchar(10) primary key, loss varchar(10));
+    exit;
 
 
-python35-setuptools.noarch 
-sudo alternatives --set python /usr/bin/python3.5
 
-sudo easy_install-3.5 pip
+
+
 sudo nano /etc/sudoers
- -> Modify to 
+ -> Modify below line. (Paste key -> shift+insert)
     Defaults    secure_path = /sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 
-wget http://cdn.mysql.com/Downloads/Connector-Python/mysql-connector-python-2.0.4.zip#md5=3df394d89300db95163f17c843ef49df
-unzip mysql-connector-python-2.0.4.zip
-cd mysql-connector-python-2.0.4
-sudo python3 setup.py install
-
-sudo pip3 install cfscrape;
-sudo pip3 install bs4;
-sudo pip3 install lxml;
-
-<Node JS - this way is too long to complie. Find other way!>
-sudo yum install -y gcc gcc-c++ make openssl-devel
-curl -O https://nodejs.org/dist/v6.11.1/node-v6.11.1.tar.gz
-tar -xvf node-v6.11.1.tar.gz && rm node-v6.11.1.tar.gz 
-cd node-v6.11.1/
-./configure
-make
-sudo make install
-
+// repoquery --whatprovides *mysql57* 
+// yum whatprovides "*python3-*"   -> command for find repository
 
 sudo yum install git
 git clone https://github.com/Hyukpyo-Hong/NodeJS_Python_DataPicking.git
 (after move to folder) npm install 
 
-(IF mysql need to be removed )
-{
-    sudo yum remove mysql mysql-server mysql-common mysql-client
-    rpm -qa | grep -i mysql
-    (from the avove list) rpm -e mysql libmysqlclient15-5.0.94-0.2.4.1 <and so on>
-    cd /var/lib
-    rm -rf mysql
-}
-
-sudo wget http://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
-sudo tar -xvf MySQL-5.6.23-1.el7.x86_64.rpm-bundle.tar
-sudo yum -y install MySQL-client-5.6.23-1.el7.x86_64.rpm
-sudo yum install MySQL-shared-compat-5.6.23-1.el7.x86_64.rpm
-sudo yum install MySQL-server-5.6.23-1.el7.x86_64.rpm
-
-sudo yum install mysql
-sudo mkdir /var/lib/mysql
-sudo yum install mysql-server
-sudo /etc/init.d/mysqld start
-mysqladmin -u root password 'root'
-sudo chkconfig mysqld on
 
 
 (After FTP send for record.csv / Be aware ther is some comma which is bigger than 1,000rate)
 sudo mv records.csv /var/lib/mysql-files/
 
-mysql -uroot -proot
-create database bustapick;
-use bustapick;
-create table record(game int primary key, rate varchar(10));
-create table max_table(rate varchar(10) primary key, max int);
-create table game(date datetime primary key, rate varchar(10), game int);
-create table rate(rate varchar(10) primary key, loss varchar(10));
-
 --For Win
 load data local infile 'C:/Users/hhong/Projects/NodeJS_Python_DataPicking/docu/record.csv' into table record fields terminated by',' lines terminated by '\n';
+load data local infile 'C:/Users/hp/Documents/NodeJS_Python_DataPicking/docu/record.csv' into table record fields terminated by',' lines terminated by '\n';
 
 --For Ubuntu
 load data infile '/var/lib/mysql-files/record.csv' into table record fields terminated by',' lines terminated by '\n';
@@ -75,22 +50,15 @@ load data infile '/var/lib/mysql-files/max.csv' into table max_table fields term
 load data infile '/var/lib/mysql-files/rate.csv' into table rate fields terminated by',' lines terminated by '\n';
 
 
-
-
 watch -n3 node index.js
-
-
-
-
 
 ---etc
 https://www.bustabit.com
 heyman
 NaeiA65P5MJ
 
-
 SELECT * FROM max_table INTO OUTFILE '/var/lib/mysql-files/max.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-SELECT game, replace(rate,',','') FROM record order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+SELECT game, rate FROM record where game between 4192138 and 4416803 order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 SELECT * FROM rate INTO OUTFILE '/var/lib/mysql-files/rate.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
 sudo ssh -i ./hong.pem ec2-user@ec2-54-204-184-186.compute-1.amazonaws.com
@@ -101,3 +69,12 @@ rdesktop -u Administrator -g 1024x700 -p 'iYUpUoiwLMXR3jVfNwqT?DevjZl3uOip' ec2-
 
 
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365
+
+
+#Apache server (Am I need?)
+sudo yum install -y httpd24 
+sudo service httpd start
+sudo usermod -a -G apache ec2-user
+sudo chmod 2775 /var/www
+find /var/www -type d -exec sudo chmod 2775 {} \;
+sudo service httpd stop

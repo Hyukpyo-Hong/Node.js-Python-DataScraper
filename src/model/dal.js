@@ -74,23 +74,38 @@ exports.getRate = (conn) => {
     });
 }
 
-
-exports.getRecent = (conn, number) => {
+exports.getMinMaxGameNumber = (conn) => {
     return new Promise((resolve, reject) => {
-        var sql = "select * from record order by game desc limit ? offset 0;";
-        conn.query(sql, [number], function (err, rows) {
+        var sql = "select min(game) as min, max(game) as max from record";
+        conn.query(sql, function (err, rows) {
             if (err) {
                 console.log(err);
                 reject(err);
             } else {
-                var recent = {};
-                
-                for (i in rows) {
-                    recent[rows[i].game] = rows[i].rate;
-                }
+                var value = {};
+                value['min'] = rows[0].min;
+                value['max'] = rows[0].max;
+                resolve(value);
+            }
+        });
+    });
+}
 
-                console.log("Fetched");                
-                resolve(recent);
+exports.getRecords = (conn, startPoint, endPoint) => {
+    return new Promise((resolve, reject) => {
+        let sql = "select rate from record where game between ? and ? order by game;";
+        let params = [startPoint, endPoint];
+        conn.query(sql, params, function (err, rows) {
+            if (err) {
+                console.log(err);
+                reject(err);
+            } else {
+                let records = [];
+                for (i in rows) {
+                    records.push(rows[i].rate);
+                }
+                console.log("\nGame %d to %d, (%d games) Fetched\n", startPoint, endPoint, endPoint - startPoint + 1);
+                resolve(records);
             }
         });
     });
@@ -101,7 +116,6 @@ exports.getRecent = (conn, number) => {
 exports.rate_calculate = (max_array, rate_array, recent_array) => {
     return new Promise((resolve, reject) => {
         const log = console.log;
-        log("HEY");
         max_array_minMax = getminMax(max_array);
         recent_array_minMax = getminMax(recent_array);
         max_array_min = max_array_minMax['min'];

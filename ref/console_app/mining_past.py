@@ -1,3 +1,8 @@
+# pip install lxml
+# pip install mysql.connector
+# pip install beautifulsoup4
+# pip install cfscrape
+
 from __future__ import print_function
 from datetime import date, datetime, timedelta
 import mysql.connector
@@ -25,26 +30,31 @@ def insert_db(type):
     if type=='next':
         idx=find_last()+1        
     elif type=='past':
-        idx=find_first()-1        
+        idx=find_first()-1                
     url = "https://www.bustabit.com/game/" + str(idx)    
     
     try:        
         soup = BeautifulSoup(scraper.get(url).content, "lxml")      
+
         gamenum = soup.find('strong').text            
         rate = soup.find('p').contents[2]
         rate = rate.replace('x', '').strip()                     
-        
-        sql="insert into record values(%s, %s)"
-        param = (gamenum, rate)
+        rate = rate.replace(',','').strip()
+        date = soup.find_all('p')[1].contents[2]
+
+        sql="insert into record values(%s, %s, %s)"
+        param = (gamenum, rate, date)
         cursor.execute(sql, param)
         cnx.commit()              
         
-        print(str(itr) + "th connection: "+gamenum+" / "+rate+" / "+type)                            
+        print(str(itr) + "th connection: "+gamenum+" / "+rate+" / "+date+" / "+type)                            
         itr+=1
 
     except KeyboardInterrupt:
         sys.exit()
-    except:
+    except BaseException as e:
+        print(str(e))
+        
         print("Wait..")                
         time.sleep(3)
         insert_db('past')     
