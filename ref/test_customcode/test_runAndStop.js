@@ -18,6 +18,10 @@ var betting = 3.2 * 100;
 var expectNetProfit = 0.1;
 var invest_initial = 100;
 var max_lost = 4;
+var freeze_betting = 2*100;
+var freeze_group = 5;
+var freeze_initial = 20;
+
 //Setting
 
 //Game Variable
@@ -26,6 +30,9 @@ var lastGamePlayed = false;
 var go = true;
 var groupNumber = 1;
 
+var freeze_count = freeze_initial;
+var freeze = false;
+var freeze_go = false;
 var cum_lost = 0;
 var cum_lost_budget = 0;
 
@@ -40,7 +47,7 @@ var endGame;
 var startPoint;
 var endPoint;
 var totalGame;
-var gameCount=0;
+var gameCount = 0;
 var testAmountUnit = 5000;
 var balance = 500000;
 var max_loss = 0;
@@ -48,7 +55,121 @@ var crash_result = 0;
 var hrstart = process.hrtime();
 var hrend;
 
-//----Only For Test
+function start() {
+  if (go) {
+    log(`Go: ${invest} bits(/100) on ${betting}x(/100)`);
+    lastGamePlayed = true;
+  } else {
+    lastGamePlayed = false;
+  }
+};
+
+function crash() {
+  log('Result: ', crash_result / 100);
+
+  if (freeze) {
+    log(`Freeze Cool Time ${freeze_count--}`);
+    if(freeze_count==0){
+      log(`!!! Freeze Release !!!`)
+      freeze=false;
+      freeze_count = freeze_initial;
+      go = true;
+      groupNumber = 1;
+      invest = invest_initial;
+      cum_lost_budget = 0;
+    }else if (freeze_go){
+      log(`Freeze Go: ${invest} bits(/100) on ${freeze_betting}x(/100)`);
+      if (crash_result >= freeze_betting) {
+        log(`**!! Freeze Win !!** ${(invest / 100) * ((freeze_betting / 100) - 1)} bits`)
+        budget += ((invest / 100) * ((freeze_betting / 100) - 1));
+        freeze_go = false;
+        freeze=false;
+        freeze_count = freeze_initial;
+        go = true;
+        groupNumber = 1;
+        invest = invest_initial;
+        cum_lost_budget = 0;             
+      }else{
+        log(`~~ Freeze Lose ~~ ${invest / 100} bits`)
+
+        budget -= (invest / 100);
+        cum_lost_budget += invest;        
+        invest = Math.ceil((cum_lost_budget * (expectNetProfit + 1)) / (freeze_betting - 100)) * 100;
+
+        if ((cum_lost_budget / 100) >= max_loss) {
+          max_loss = cum_lost_budget / 100;
+          logEssense(`Max Loss: ${max_loss} bits at Freeze Go / ID# ${startGame - 1}`);
+        }        
+      }
+      if (max_budget < budget) {
+        max_budget = budget;
+      }
+      if (min_budget > budget) {
+        min_budget = budget;
+      }
+      log(`Current Budget: ${Math.floor(budget)}`);
+      log(`Min-Max Budget: ${Math.floor(min_budget)} - ${Math.floor(max_budget)}`);
+    }
+
+  } else {
+    if (lastGamePlayed == true) {
+      if (crash_result >= betting) {
+        log(`**!! Win !!** ${(invest / 100) * ((betting / 100) - 1)} bits`)
+        budget += ((invest / 100) * ((betting / 100) - 1));
+        invest = invest_initial;
+        cum_lost_budget = 0;
+        cum_lost = 0;
+        groupNumber = 1;
+        go = true;
+      } else {
+        log(`~~ Lose ~~ ${invest / 100} bits`)
+
+        budget -= (invest / 100);
+        cum_lost_budget += invest;
+        cum_lost++;
+
+        if ((cum_lost_budget / 100) >= max_loss) {
+          max_loss = cum_lost_budget / 100;
+          logEssense(`Max Loss: ${max_loss} bits at Group ${groupNumber} / Count ${cum_lost} / ID# ${startGame - 1}`);
+        }
+
+        invest = Math.ceil((cum_lost_budget * (expectNetProfit + 1)) / (betting - 100)) * 100;
+
+        if (cum_lost == max_lost) {
+          groupNumber += 1;
+          cum_lost = 0;
+          go = false;
+          if (groupNumber == freeze_group) {
+            freeze = true;
+            freeze_go = true;
+            log("!!!! Freeze !!!!");
+            invest = Math.ceil((cum_lost_budget * (expectNetProfit + 1)) / (freeze_betting - 100)) * 100;
+          }
+        } else {
+          go = true;
+        }
+      }
+
+      if (max_budget < budget) {
+        max_budget = budget;
+      }
+      if (min_budget > budget) {
+        min_budget = budget;
+      }
+      log(`Current Budget: ${Math.floor(budget)}`);
+      log(`Min-Max Budget: ${Math.floor(min_budget)} - ${Math.floor(max_budget)}`);
+    } else if (lastGamePlayed == false) {
+      if (crash_result >= betting) {
+        log("Release!");
+        go = true;
+      } else {
+        log("Wait..");
+      }
+    }
+  }
+};
+
+//----Only For Test Start
 
 function log() {
   for (i = 0; i < arguments.length; i++) {
@@ -65,15 +186,15 @@ function logEssense() {
 }
 
 
-var getRecordAndStart = () => {
+var injectRecordAndStart = () => {
   return new Promise((resolve, reject) => {
     dal.getRecords(conn, startPoint, endPoint)
       .then((records) => {
-        gameCount += testAmountUnit;        
-        console.log(`${Math.round(gameCount/totalGame*100)}% Tested`);
+        gameCount += testAmountUnit;
+        console.log(`${Math.round(gameCount / totalGame * 100)}% Tested`);
         for (let i = 0; i < testAmountUnit; i++) {
           log('------------------------');
-          log(`Game # ${startGame++} / Group # ${groupNumber} / Count # ${cum_lost+1}`);
+          log(`ID # ${startGame++} / Group # ${groupNumber} / Count # ${cum_lost + 1}`);
           crash_result = records[i] * 100;
           start();
           crash();
@@ -83,10 +204,11 @@ var getRecordAndStart = () => {
       .then(() => {
         startPoint = endPoint + 1;
         endPoint = startPoint + testAmountUnit - 1;
-        if (startPoint >= endGame) {
+        if (endPoint > endGame) {
           resolve();
-        } else {
-          getRecordAndStart()
+        }
+        else {
+          injectRecordAndStart()
             .then(() => {
               resolve();
             });
@@ -111,14 +233,14 @@ function test() {
   });
   dal.getMinMaxGameNumber(conn).then((value) => {
     startGame = value['min'];
-    endGame = value['max'];    
-    totalGame = endGame - startGame+1;
-    console.log("Start Game# %d, End Game# %d", startGame, endGame);
+    endGame = value['max'];
+    totalGame = endGame - startGame + 1;
+    console.log("Start ID# %d, End ID# %d", startGame, endGame);
     startPoint = startGame;
     endPoint = startPoint + testAmountUnit - 1;
     return true;
   }).then(() => {
-    getRecordAndStart().then(() => {
+    injectRecordAndStart().then(() => {
       hrend = process.hrtime(hrstart);
       console.info("Execution time (hr): %ds %dms", hrend[0], hrend[1] / 1000000);
       console.log("Finish");
@@ -127,67 +249,7 @@ function test() {
   });
 };
 
-function start() {
-  if (go) {
-    log(`Go: ${invest} bits(/100) on ${betting}x(/100)`);
-    lastGamePlayed = true;
-  } else {
-    lastGamePlayed = false;
-  }
-};
-
-function crash() {
-  log('Result: ', crash_result / 100);
-  if (lastGamePlayed == true) {
-    if (crash_result >= betting) {
-      log(`**!! Win !!** ${(invest / 100) * ((betting / 100) - 1)} bits`)
-      budget += ((invest / 100) * ((betting / 100) - 1));
-      invest = invest_initial;
-      cum_lost_budget = 0;
-      cum_lost = 0;
-      groupNumber = 1;
-      go = true;
-    } else {
-      log(`~~ Lose ~~ ${invest / 100} bits`)
-
-      budget -= (invest / 100);
-      cum_lost_budget += invest;
-      cum_lost++;
-      
-      if ((cum_lost_budget / 100) > max_loss) {      
-        max_loss = cum_lost_budget / 100;
-        logEssense(`Max Loss: ${max_loss} bits at Group ${groupNumber} / Count ${cum_lost} / Game# ${startGame-1}`);
-      }
-
-      invest = Math.ceil((cum_lost_budget*(expectNetProfit+1)) / (betting - 100)) * 100;
-
-      if (cum_lost == max_lost) {
-        groupNumber += 1;           
-        cum_lost = 0;
-        go = false;
-      } else {        
-        go = true;
-      }
-    }
-
-    if (max_budget < budget) {
-      max_budget = budget;
-    }
-    if (min_budget > budget) {
-      min_budget = budget;
-    }
-    log(`Current Budget: ${Math.floor(budget)}`);
-    log(`Min-Max Budget: ${Math.floor(min_budget)} - ${Math.floor(max_budget)}`);
-  } else if (lastGamePlayed == false) {
-    if (crash_result >= betting) {
-      log("Release!");
-      go = true;
-    } else {
-      log("Wait..");
-    }
-  }
-};
-
+//----Only For Test End
 
 test();
 

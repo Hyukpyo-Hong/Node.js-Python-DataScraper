@@ -104,7 +104,7 @@ exports.getRecords = (conn, startPoint, endPoint) => {
                 for (i in rows) {
                     records.push(rows[i].rate);
                 }
-                console.log("\nGame %d to %d, (%d games) Fetched\n", startPoint, endPoint, endPoint - startPoint + 1);
+                console.log("\nID %d to %d, (%d Records) Fetched\n", startPoint, endPoint, endPoint - startPoint + 1);
                 resolve(records);
             }
         });
