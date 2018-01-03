@@ -21,6 +21,20 @@ start = 0
 end = 0
 current = 0
 sleepGap = 10.1 
+
+def find_last():
+    sql = "select * from record order by game desc LIMIT 1 OFFSET 0"
+    cursor.execute(sql)    
+    for game, rate in cursor:
+        return game
+
+def find_first():  
+    sql = "select * from record order by game LIMIT 1 OFFSET 0"
+    cursor.execute(sql)    
+    for game, rate in cursor:
+        return game
+
+
 def check(game): 
     sql = "select count(*) as count from record where game = %s"    
     cursor.execute(sql,(game,))
