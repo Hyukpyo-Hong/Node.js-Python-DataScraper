@@ -15,7 +15,9 @@ mysql -u root
     create database bustapick;
     use bustapick;
     create table record(game int primary key, rate float(10,2), date datetime);
-    create table max_table(rate varchar(10) primary key, max int);
+    create table maxtable(rate float(10,2) primary key, count int);
+    create table error(error varchar(2000), date datetime);
+
     create table game(date datetime primary key, rate varchar(10), game int);
     create table rate(rate varchar(10) primary key, loss varchar(10));
     exit;
@@ -37,8 +39,8 @@ git clone https://github.com/Hyukpyo-Hong/NodeJS_Python_DataPicking.git
 
 
 
-(After FTP send for record.csv / Be aware ther is some comma which is bigger than 1,000rate)
-sudo mv records.csv /var/lib/mysql-files/
+
+sudo mv record.csv /var/lib/mysql-files/
 
 --For Win
 load data local infile 'C:/Users/hhong/Projects/NodeJS_Python_DataPicking/docu/record.csv' into table record fields terminated by',' lines terminated by '\n';
@@ -57,16 +59,15 @@ https://www.bustabit.com
 heyman
 NaeiA65P5MJ
 
-SELECT * FROM max_table INTO OUTFILE '/var/lib/mysql-files/max.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-SELECT game, rate FROM record where game between 4192138 and 4416803 order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+SELECT game, rate FROM record where game order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+SELECT * FROM maxtable INTO OUTFILE '/var/lib/mysql-files/max.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 SELECT * FROM rate INTO OUTFILE '/var/lib/mysql-files/rate.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
-sudo ssh -i ./hong.pem ec2-user@ec2-54-204-184-186.compute-1.amazonaws.com
+/Main DB
+sudo ssh -i ./hong.pem ec2-user@ec2-52-200-152-246.compute-1.amazonaws.com 
 
-rdesktop -u Administrator -g 1024x700 -p 'tdD6I4m.ZlBy47w.F8d-?dWJHczmt6(y' ec2-34-229-94-207.compute-1.amazonaws.com 
-rdesktop -u Administrator -g 1024x700 -p '68@%WYE!=bcI)j438)SjknS(XVr=g@2N' ec2-34-230-32-69.compute-1.amazonaws.com
-rdesktop -u Administrator -g 1024x700 -p 'iYUpUoiwLMXR3jVfNwqT?DevjZl3uOip' ec2-54-84-218-198.compute-1.amazonaws.com
-
+rdesktop -u Administrator -g 1024x700 -p 'i-0bb7f2f0e217c1999' ec2-54-82-196-215.compute-1.amazonaws.com
+PW: Fhzkfmsh!2
 
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365
 
