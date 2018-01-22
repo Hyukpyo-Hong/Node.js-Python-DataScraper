@@ -78,4 +78,4 @@ var sslOptions = {
     passphrase: 'fhzkfmsh'
 };
 https.createServer(sslOptions, app).listen(port)
-console.log("Server Start.  https://ec2-54-82-196-215.compute-1.amazonaws.com:" + port);
+console.log("Server Start.  https://ec2-52-200-152-246.compute-1.amazonaws.com:" + port);

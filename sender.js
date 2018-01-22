@@ -1,7 +1,8 @@
 var time, investAmount, bettingRate;
 var go = false;
-var api = "https://localhost:3000";
-// var api = "https://ec2-54-82-196-215.compute-1.amazonaws.com:3000";
+//var api = "https://localhost:3000";
+var api = "https://ec2-52-200-152-246.compute-1.amazonaws.com:3000";
+
 console.clear();
 
 engine.on('game_starting', function (info) {
@@ -27,7 +28,7 @@ engine.on('game_crash', function (data) {
 
         //Pick the latest Game Number and Rate
         var pattern = "/game/";
-        var els = document.querySelectorAll("a[href^='/game/'] > span");
+        var els = document.querySelectorAll("a[href^='/game/'] > span");        
         let game = els[0].parentElement.getAttribute("href");
         game = game.substr(pattern.length);
         let rate = els[0].innerHTML;
