@@ -1,4 +1,5 @@
 var fs = require('fs');
+var stream;
 
 //Setting
 var InitialInvenstAmount = 1;
@@ -38,71 +39,67 @@ exports.init = () => {
     fs.unlink('log.txt', function (err) {
         if (err) {
         } else {
-            //console.log('log.txt File deleted!');
+            console.log('log.txt File deleted!');
         };
     });
-    fs.unlink('log_Essense.txt', function (err) {
-        if (err) {
-        } else {
-            //console.log('log_Essense.txt File deleted!');
-        };
-    });
-    initializer();
+    stream = fs.createWriteStream("log.txt", { flags: 'a' });
+    initializer();    
 }
 
 exports.compute = (game, rate) => {
-    //return new Promise((resolve, reject) => {        
-    try {
-        if (lastGameWin) {
-            thredsholdAdjust();
+    // return new Promise((resolve, reject) => {
+        try {
+            if (lastGameWin) {
+                thredsholdAdjust();
+            }
+            // Initialize Result Value. Client won't work with 0
+            var result = {
+                "bettingRate": 0,
+                "investAmount": 0,
+            }
+
+            /* Determine if Game Number is Continuous*/
+            if (previousGameNumber + 1 != game) {
+                log("Missing Game Number: Prev#", previousGameNumber, "Current#", game);
+                //console.log("Missing Game Number: Prev#", previousGameNumber, "Current#", game);                
+                initializer();
+            }
+            previousGameNumber = game;
+
+            // Store Crash Result            
+            log(` *Crash: ${rate} x at ${gameNumber}th Game(#${game})`);
+            
+            gameNumber++;
+            resultOfThisTurn = parseFloat(rate);
+
+            // If invested this turn, calculate profit or loss.
+            if (go) {
+                calculateAfterGoAndCrash();
+            }
+
+            // Analyze next turn
+            decideNextTurn();
+
+            // If invest next turn, Set return payload for amount, and rate. Then, calculate cumulative money spending.        
+            if (go) {
+                log(`--------------------------------------\r\n#Go ${investAmount} bits on Rate ${bettingRate}`);
+                //console.log(`--------------------------------------\r\n#Go ${investAmount} bits on Rate ${bettingRate}`);
+                result.bettingRate = bettingRate;
+                result.investAmount = investAmount;
+                calculateBeforeCrash();
+            }
+            //resolve(result);
+            return result;
         }
-        // Initialize Result Value. Client won't work with 0
-        var result = {
-            "bettingRate": 0,
-            "investAmount": 0,
+        catch (error) {
+            log(error);
+            //console.log(error);
+            //reject(error);
+
         }
-
-        /* Determine if Game Number is Continuous*/
-        if (previousGameNumber + 1 != game) {
-            log("Missing Game Number: Prev#", previousGameNumber, "Current#", game);
-            //console.log("Missing Game Number: Prev#", previousGameNumber, "Current#", game);                
-            initializer();
-        }
-        previousGameNumber = game;
-
-        // Store Crash Result            
-        log(` >Crash: ${rate} x at ${gameNumber}th Game(#${game})`);
-        //console.log(`${gameNumber}th Game(#${game}) Crash: ${rate} x`);
-        gameNumber++;
-        resultOfThisTurn = parseFloat(rate);
-
-        // If invested this turn, calculate profit or loss.
-        if (go) {
-            calculateAfterGoAndCrash();
-        }
-
-        // Analyze next turn
-        decideNextTurn();
-
-        // If invest next turn, Set return payload for amount, and rate. Then, calculate cumulative money spending.        
-        if (go) {
-            log(`--------------------------------------\r\n#Go ${investAmount} bits on Rate ${bettingRate}`);
-            //console.log(`--------------------------------------\r\n#Go ${investAmount} bits on Rate ${bettingRate}`);
-            result.bettingRate = bettingRate;
-            result.investAmount = investAmount;
-            calculateBeforeCrash();
-        }
-        //resolve(result);
-        return result;
-    }
-    catch (error) {
-        log(error);
-        //console.log(error);
-        //reject(error);
-
-    }
-    //  });
-};
+        
+    // });
+}
 
 function thredsholdAdjust() {
     recoverRate = initialRecoverRate;
@@ -145,8 +142,7 @@ function thredsholdAdjust() {
         thredshold = 9;
         recoverRate = 2.1;
         guideRate = 2;
-    }
-    log(`Thredshold: ${thredshold}`);
+    }    
 }
 
 
@@ -166,19 +162,21 @@ function decideNextTurn() {
         let maxLoseOfThisKey = maxArray.get(key);
         let diff = (maxLoseOfThisKey - loseCountArray.get(key));
         let probability = 1 / diff;
-        //console.log(`${key}: 1/${diff} [${maxLoseOfThisKey}], P(${Math.round(probability * 100) / 100})`);
+        
+        if(probability>0.05&& key>=2){
+            log(` <0.05,2x Candidate- ${key}x 1/${diff} [${maxLoseOfThisKey}], P(${Math.round(probability * 100) / 100}) Thredshold: ${thredshold}`);
+        }        
         // Find rate will win 100% and less than 9.7
         if (!isFinite(probability) && key <= 9.7) {
             log(`!!100% ${key} `);
-            //console.log(`!!100% ${key} `);
+            
             absolutePossibleArray.push(key);
         }
 
         // Or, Find possible winning rate over rate 3.0
         else if (key >= guideRate) {
             if (diff <= thredshold && diff > -3) {
-                log(` ${key}: 1/${diff} [${maxLoseOfThisKey}], P(${Math.round(probability * 100) / 100})`);
-                //console.log(`${key}: 1/${diff} [${maxLoseOfThisKey}], P(${Math.round(probability * 100) / 100})`);
+                log(` Real Candidate- ${key}x 1/${diff} [${maxLoseOfThisKey}], P(${Math.round(probability * 100) / 100}) Thredshold: ${thredshold}`);                
                 possibleArray.set(key, diff);
             }
         }
@@ -265,13 +263,20 @@ function arrayMin(arr) {
     return min;
 };
 
-
 function log() {
-    for (i = 0; i < arguments.length; i++) {
-        fs.appendFileSync('log.txt', arguments[i] + " ", encoding = 'utf8');
+    let msg = "";
+    for (let i = 0; i < arguments.length; i++) {
+        msg += arguments[i] + " ";
     }
-    fs.appendFileSync('log.txt', "\r\n", encoding = 'utf8');
+    console.log(msg);    
+    stream.write(msg+"\r\n");
 }
+// function log() {
+//     for (i = 0; i < arguments.length; i++) {
+//         fs.appendFileSync('log.txt', arguments[i] + " ", encoding = 'utf8');
+//     }
+//     fs.appendFileSync('log.txt', "\r\n", encoding = 'utf8');
+// }
 
 
 //maxArray.set(1, 2);

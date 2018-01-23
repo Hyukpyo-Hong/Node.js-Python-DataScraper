@@ -1,7 +1,7 @@
 var time, investAmount, bettingRate;
 var go = false;
-//var api = "https://localhost:3000";
-var api = "https://ec2-52-200-152-246.compute-1.amazonaws.com:3000";
+//var api = "https://localhost:3001";
+var api = "https://ec2-34-203-159-36.compute-1.amazonaws.com:3001";
 
 console.clear();
 
@@ -50,7 +50,6 @@ engine.on('game_crash', function (data) {
             xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
             xhr.onreadystatechange = function () {
                 if (xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200) {
-
                     var json = JSON.parse(xhr.responseText);
                     console.log("\r\nAPI Response:");
                     if (json.bettingRate == 0 || json.investAmount == 0) {
@@ -65,6 +64,8 @@ engine.on('game_crash', function (data) {
                         //bettingRate = json.bettingRate*100;
                         //investAmount = json.investAmount*100;
                     }
+                }else{
+                    console.log(`xhr.status=${xhr.status}`);
                 }
             }
             xhr.send(params);

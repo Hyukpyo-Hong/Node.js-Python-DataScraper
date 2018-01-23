@@ -71,11 +71,11 @@ app.io.on('connection', function (socket) {
 
 
 //Server Launch
-var port = 3000
+var port = 3001
 var sslOptions = {
     key: fs.readFileSync('key.pem'),
     cert: fs.readFileSync('cert.pem'),
     passphrase: 'fhzkfmsh'
 };
 https.createServer(sslOptions, app).listen(port)
-console.log("Server Start.  https://ec2-52-200-152-246.compute-1.amazonaws.com:" + port);
+console.log("Server Start.  ec2-34-203-159-36.compute-1.amazonaws.com:" + port);

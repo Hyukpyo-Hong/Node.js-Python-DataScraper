@@ -9,7 +9,7 @@ import time
 import sys
 
 #hosturl = '127.0.0.1'
-hosturl = 'ec2-52-200-152-246.compute-1.amazonaws.com'
+hosturl = 'ec2-34-203-159-36.compute-1.amazonaws.com'
 
 cnx = mysql.connector.connect(user='root', password='fhzkfmsh12',
                               host=hosturl,
