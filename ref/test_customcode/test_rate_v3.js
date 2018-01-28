@@ -22,7 +22,7 @@ var endGameNumber;
 var startPoint;
 var endPoint;
 var totalGame;
-var testAmountUnit = 5000;
+var testAmountUnit = 10000;
 var hrstart = process.hrtime();
 var hrend;
 
@@ -30,16 +30,17 @@ var injectRecordAndStart = () => {
   return new Promise((resolve, reject) => {
     dal.getRecords(conn, startPoint, endPoint)
       .then((records) => {
-        gameCount += testAmountUnit;
-        console.log(`Testing ${Math.round(gameCount / totalGame * 100)}%`);
+        gameCount += testAmountUnit;        
+        console.log(`Testing ${Math.round(gameCount / totalGame * 100)}% ${gameCount-testAmountUnit}th to ${gameCount-1}th Game.`);
         for (let i = 0; i < testAmountUnit; i++) {
           calculator.compute(startPoint+i,records[i].toString());         
         }
+        console.log(calculator.result());
         return true;
       })
       .then(() => {
         startPoint = endPoint + 1;
-        endPoint = startPoint + testAmountUnit - 1;
+        endPoint = startPoint + testAmountUnit - 1;        
         if (endPoint > endGameNumber) {
           resolve();
         }
@@ -62,7 +63,7 @@ function test() {
     endGameNumber = value['max'];
     //endGameNumber = startGameNumber + 100000;
     totalGame = endGameNumber - startGameNumber + 1;
-    console.log(`Game #${startGameNumber} to #${endGameNumber}`);
+    console.log(`Test Range #${startGameNumber} to #${endGameNumber}`);
     startPoint = startGameNumber;
     endPoint = startPoint + testAmountUnit - 1;
     return true;

@@ -15,7 +15,7 @@ BEGIN
    
   delete from maxtable;
   
-   while(@compare <= 50) do
+   while(@compare <= 5) do
 	 select @compare, max(sub.result) 
      INTO  @_game, @_count
      from (
@@ -23,7 +23,7 @@ BEGIN
     
     if(@compare>=10) 
     THEN set @compare = @compare + 1;
-    ELSE set @compare = @compare + 0.1;
+    ELSE set @compare = @compare + 0.01;
     END IF;
 
 	insert into maxtable values(@_game,@_count);

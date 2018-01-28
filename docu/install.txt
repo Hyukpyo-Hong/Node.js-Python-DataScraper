@@ -15,11 +15,7 @@ mysql -u root
     create database bustapick;
     use bustapick;
     create table record(game int primary key, rate float(10,2), date datetime);
-    create table maxtable(rate float(10,2) primary key, count int);
     create table error(error varchar(2000), date datetime);
-
-    create table game(date datetime primary key, rate varchar(10), game int);
-    create table rate(rate varchar(10) primary key, loss varchar(10));
     exit;
 
 
@@ -40,7 +36,10 @@ git clone https://github.com/Hyukpyo-Hong/NodeJS_Python_DataPicking.git
 
 
 
+// Export
+ 
 sudo mv record.csv /var/lib/mysql-files/
+
 
 --For Win
 load data local infile 'C:/Users/hhong/Projects/NodeJS_Python_DataPicking/docu/record.csv' into table record fields terminated by',' lines terminated by '\n';
@@ -48,9 +47,10 @@ load data local infile 'C:/Users/hp/Documents/NodeJS_Python_DataPicking/docu/rec
 
 --For Ubuntu
 load data infile '/var/lib/mysql-files/record.csv' into table record fields terminated by',' lines terminated by '\n';
-load data infile '/var/lib/mysql-files/max.csv' into table max_table fields terminated by',' lines terminated by '\n';
-load data infile '/var/lib/mysql-files/rate.csv' into table rate fields terminated by',' lines terminated by '\n';
 
+// Import
+SELECT game, rate, date FROM record where game order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+SELECT * FROM maxtable INTO OUTFILE '/var/lib/mysql-files/maxt.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
 watch -n3 node index.js
 
@@ -59,14 +59,14 @@ https://www.bustabit.com
 heyman
 NaeiA65P5MJ
 
-SELECT game, rate FROM record where game order by game INTO OUTFILE '/var/lib/mysql-files/record.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-SELECT * FROM maxtable INTO OUTFILE '/var/lib/mysql-files/max.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-SELECT * FROM rate INTO OUTFILE '/var/lib/mysql-files/rate.csv' FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+
+
 
 /Main DB
-sudo ssh -i ./hong.pem ec2-user@ec2-52-200-152-246.compute-1.amazonaws.com 
+sudo ssh -i ./hong.pem ec2-user@ec2-34-203-159-36.compute-1.amazonaws.com
 
-rdesktop -u Administrator -g 1024x700 -p 'i-0bb7f2f0e217c1999' ec2-54-82-196-215.compute-1.amazonaws.com
+//Windwos Server
+rdesktop -u Administrator -g 1366x768 -p 'fhzkfmsh!2' ec2-54-82-196-215.compute-1.amazonaws.com
 PW: Fhzkfmsh!2
 
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365
